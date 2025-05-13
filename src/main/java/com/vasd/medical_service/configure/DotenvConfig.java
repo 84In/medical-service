@@ -1,4 +1,4 @@
-package com.vasd.medial_service.configure;
+package com.vasd.medical_service.configure;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import org.slf4j.Logger;
