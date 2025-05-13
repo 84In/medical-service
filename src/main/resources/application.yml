@@ -1,6 +1,8 @@
 server:
   port: 8080
 spring:
+  application:
+    name: medial_service
   datasource:
     url: jdbc:mysql://localhost:3306/${MYSQL_DATABASE:healthcare}
     username: ${MYSQL_USER:appuser}
@@ -13,3 +15,14 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
+
+jwt:
+  secret: 6qXVKIfdJ3jeetvwizCN3fqkmAN503tH
+  signerKey: EgZZ65TPAGfRqn9v/LRo7bysgjc9YU2g4EuDGD2gieOA5OroMEMyICc8H93NbBtc
+  valid-duration: 3600
+  refreshable-duration: 36000
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs

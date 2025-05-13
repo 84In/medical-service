@@ -95,5 +95,6 @@ CREATE TABLE Users (
                        phone VARCHAR(20),
                        email VARCHAR(100) UNIQUE,
                        role_id INT,
-                       FOREIGN KEY (role_id) REFERENCES Roles(id)
+                       FOREIGN KEY (role_id) REFERENCES Roles(id),
+                       CONSTRAINT uk_username UNIQUE (username)
 );
