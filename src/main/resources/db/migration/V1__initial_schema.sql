@@ -31,9 +31,11 @@ CREATE TABLE Doctors (
                          experience_years INT,
                          department_id INT,
                          position_id INT,
+                         title_id INT,
                          status TINYINT UNSIGNED CHECK (status BETWEEN 0 AND 3),
                          FOREIGN KEY (department_id) REFERENCES Departments(id),
-                         FOREIGN KEY (position_id) REFERENCES Positions(id)
+                         FOREIGN KEY (position_id) REFERENCES Positions(id),
+                         FOREIGN KEY (title_id) REFERENCES Titles(id)
 );
 
 -- Tạo bảng Shifts
