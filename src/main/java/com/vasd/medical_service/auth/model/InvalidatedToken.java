@@ -9,7 +9,7 @@ import lombok.experimental.FieldDefaults;
 import java.util.Date;
 
 @Entity
-@Table(name = "Tokens")
+@Table(name = "tokens")
 @Setter
 @Getter
 @AllArgsConstructor

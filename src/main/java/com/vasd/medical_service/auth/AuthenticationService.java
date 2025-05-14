@@ -64,7 +64,7 @@ public class AuthenticationService {
         }
 
         var token = generateToken(user);
-        log.info(token);
+        log.info("Token generate {}",token);
 
         return AuthenticationResponse.builder()
                 .token(token)
