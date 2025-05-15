@@ -18,6 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "User Controller", description = "User Management")
 public class UserController {
+
     private final UserService userService;
 
     @GetMapping()
