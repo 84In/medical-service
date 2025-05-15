@@ -79,15 +79,15 @@ public class UserService {
         return mapUsertoUserDto(user);
     }
 
-    public UserResponseDto changePassword(ChangePasswordUserDto model, Long id) {
+    public String changePassword(ChangePasswordUserDto model, Long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         if(!checkPassword(model.getPassword(), user)) {
             log.info("Invalid Password from user {}", user.getUsername());
             throw new AppException(ErrorCode.INVALID_PASSWORD);
         }
         user.setPassword(passwordEncoder.encode(model.getNewPassword()));
-        log.info("Password updated {}", user.getPassword());
-        return mapUsertoUserDto(user);
+        userRepository.save(user);
+        return "Password updated successfully";
     }
 
     public void deleteUser(Long id) {
