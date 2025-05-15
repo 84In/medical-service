@@ -6,11 +6,13 @@ import org.springframework.http.HttpStatusCode;
 
 @Getter
 public enum ErrorCode {
-    //
+    //Server Error
     UNCATEGORIZED_EXCEPTION(999, "", HttpStatus.INTERNAL_SERVER_ERROR),
+
     //System Error
     UNAUTHORIZED(101, "You do not have permission", HttpStatus.FORBIDDEN),
     UNAUTHENTICATED(102, "Unauthenticated", HttpStatus.UNAUTHORIZED),
+
     //Validation
     INVALID_KEY(201, "Invalid message key", HttpStatus.BAD_REQUEST),
 
@@ -20,6 +22,15 @@ public enum ErrorCode {
     USER_NOT_FOUND(303, "User not found", HttpStatus.BAD_REQUEST),
     USER_EXISTS(304, "User already exists", HttpStatus.BAD_REQUEST),
     INVALID_PASSWORD(305, "Invalid password", HttpStatus.BAD_REQUEST),
+
+    //Title Error
+    TITLE_NOT_FOUND(310, "Title not found", HttpStatus.BAD_REQUEST),
+    TITLE_EXISTS(311, "Title already exists", HttpStatus.BAD_REQUEST),
+
+    //Position Error
+    POSITION_NOT_FOUND(312, "Position not found", HttpStatus.BAD_REQUEST),
+    POSITION_EXISTS(313, "Position already exists", HttpStatus.BAD_REQUEST),
+
 
     //SQL Error
     DATA_INTEGRITY_VIOLATION(1002, "Lỗi ràng buộc dữ liệu", HttpStatus.BAD_REQUEST),
