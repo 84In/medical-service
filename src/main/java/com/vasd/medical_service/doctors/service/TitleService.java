@@ -61,7 +61,7 @@ public class TitleService {
         return mapTitleToTitleDto(titleRepository.save(title));
     }
 
-    public void removeTitle(Long id) {
+    public void deleteTitle(Long id) {
         log.info("Removing title {}", id);
         titleRepository.deleteById(id);
     }

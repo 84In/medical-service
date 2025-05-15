@@ -30,7 +30,12 @@ public enum ErrorCode {
     //Position Error
     POSITION_NOT_FOUND(312, "Position not found", HttpStatus.BAD_REQUEST),
     POSITION_EXISTS(313, "Position already exists", HttpStatus.BAD_REQUEST),
-
+    //Department Error
+    DEPARTMENT_NOT_FOUND(314, "Department not found", HttpStatus.BAD_REQUEST),
+    DEPARTMENT_EXISTS(315, "Department already exists", HttpStatus.BAD_REQUEST),
+    //Doctor Error
+    DOCTOR_NOT_FOUND(316, "Doctor not found", HttpStatus.BAD_REQUEST),
+    DOCTOR_EXISTS(317, "Doctor already exists", HttpStatus.BAD_REQUEST),
 
     //SQL Error
     DATA_INTEGRITY_VIOLATION(1002, "Lỗi ràng buộc dữ liệu", HttpStatus.BAD_REQUEST),
