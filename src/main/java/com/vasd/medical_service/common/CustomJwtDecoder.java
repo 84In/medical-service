@@ -1,8 +1,6 @@
 package com.vasd.medical_service.common;
 
-import com.vasd.medical_service.auth.AuthenticationService;
-import com.vasd.medical_service.auth.TokenValidationService;
-import com.vasd.medical_service.auth.dto.IntrospectRequest;
+import com.vasd.medical_service.auth.service.TokenValidationService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

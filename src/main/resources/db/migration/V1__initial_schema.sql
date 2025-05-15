@@ -18,7 +18,7 @@ CREATE TABLE positions (
 CREATE TABLE departments (
                              id INT PRIMARY KEY AUTO_INCREMENT,
                              name VARCHAR(100) NOT NULL,
-                             description TEXT,
+                             contentHtml TEXT,
                              status TINYINT UNSIGNED CHECK (status BETWEEN 0 AND 3)
 );
 
