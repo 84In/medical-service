@@ -1,5 +1,6 @@
 package com.vasd.medical_service.doctors.service;
 
+import com.vasd.medical_service.Enum.Status;
 import com.vasd.medical_service.doctors.dto.request.CreateDoctorDto;
 import com.vasd.medical_service.doctors.dto.request.UpdateDoctorDto;
 import com.vasd.medical_service.doctors.dto.response.DepartmentResponseDto;
@@ -38,18 +39,18 @@ public class DoctorService {
         doctor.setName(createDoctorDto.getName());
         doctor.setAvatarUrl(createDoctorDto.getAvatarUrl());
         doctor.setIntroduction(createDoctorDto.getIntroduction());
-        doctor.setExperience_years(createDoctorDto.getExperience_years());
-        doctor.setStatus(1);
+        doctor.setExperience_years(createDoctorDto.getExperienceYears());
+        doctor.setStatus(Status.ACTIVE);
 
-        Department department = departmentRepository.findById(createDoctorDto.getDepartment_id())
+        Department department = departmentRepository.findById(createDoctorDto.getDepartmentId())
                 .orElseThrow(()-> new AppException(ErrorCode.DEPARTMENT_NOT_FOUND));
         doctor.setDepartment(department);
 
-        Position position = positionRepository.findById(createDoctorDto.getPosition_id())
+        Position position = positionRepository.findById(createDoctorDto.getPositionId())
                 .orElseThrow(()-> new AppException(ErrorCode.POSITION_NOT_FOUND));
         doctor.setPosition(position);
 
-        Title title = titleRepository.findById(createDoctorDto.getTitle_id())
+        Title title = titleRepository.findById(createDoctorDto.getTitleId())
                 .orElseThrow(()-> new AppException(ErrorCode.TITLE_NOT_FOUND));
         doctor.setTitle(title);
 

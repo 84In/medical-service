@@ -1,5 +1,6 @@
 package com.vasd.medical_service.doctors.service;
 
+import com.vasd.medical_service.Enum.Status;
 import com.vasd.medical_service.doctors.dto.request.CreatePositionDto;
 import com.vasd.medical_service.doctors.dto.request.UpdatePositionDto;
 import com.vasd.medical_service.doctors.dto.response.PositionResponseDto;
@@ -26,7 +27,7 @@ public class PositionService {
         Position position = new Position();
         position.setName(request.getName());
         position.setDescription(request.getDescription());
-        position.setStatus(1);
+        position.setStatus(Status.ACTIVE);
 
         log.info("Creating position {}", position);
 

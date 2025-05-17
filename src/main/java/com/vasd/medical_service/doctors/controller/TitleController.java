@@ -7,6 +7,7 @@ import com.vasd.medical_service.doctors.dto.response.TitleResponseDto;
 import com.vasd.medical_service.doctors.service.TitleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,7 +44,7 @@ public class TitleController {
     @PostMapping
     @Operation(summary = "Create new title information", description = "Return the newly created title information")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "0", description = "Newly created title information")
-    public ApiResponse<TitleResponseDto> creatTitle(@RequestBody CreateTitleDto request) {
+    public ApiResponse<TitleResponseDto> creatTitle(@RequestBody @Valid CreateTitleDto request) {
 
         return ApiResponse.<TitleResponseDto>builder()
                 .result(titleService.creatTitle(request))
