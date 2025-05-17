@@ -95,7 +95,7 @@ public class ServiceService {
         return mapServiceToDto( serviceRepository.save(service));
     }
 
-    private void deleteServiceById(Long id) {
+    public void deleteServiceById(Long id) {
         log.info("Delete service: {}", id);
         serviceRepository.deleteById(id);
     }
