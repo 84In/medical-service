@@ -36,6 +36,12 @@ public enum ErrorCode {
     //Doctor Error
     DOCTOR_NOT_FOUND(316, "Doctor not found", HttpStatus.BAD_REQUEST),
     DOCTOR_EXISTS(317, "Doctor already exists", HttpStatus.BAD_REQUEST),
+    //ServiceType Error
+    SERVICE_TYPE_NOT_FOUND(318, "Service type not found", HttpStatus.BAD_REQUEST),
+    SERVICE_TYPE_EXISTS(319, "Service type already exists", HttpStatus.BAD_REQUEST),
+    //Service Error
+    SERVICE_NOT_FOUND(320, "Service not found", HttpStatus.BAD_REQUEST),
+    SERVICE_EXISTS(321, "Service already exists", HttpStatus.BAD_REQUEST),
 
     //SQL Error
     DATA_INTEGRITY_VIOLATION(1002, "Lỗi ràng buộc dữ liệu", HttpStatus.BAD_REQUEST),
