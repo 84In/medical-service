@@ -1,5 +1,6 @@
 package com.vasd.medical_service.doctors.service;
 
+import com.vasd.medical_service.Enum.Status;
 import com.vasd.medical_service.doctors.dto.request.CreateDepartmentDto;
 import com.vasd.medical_service.doctors.dto.request.UpdateDepartmentDto;
 import com.vasd.medical_service.doctors.dto.response.DepartmentResponseDto;
@@ -25,7 +26,7 @@ public class DepartmentService {
         Department department = new Department();
         department.setName(createDepartmentDto.getName());
         department.setContentHtml(createDepartmentDto.getContentHtml());
-        department.setStatus(1);
+        department.setStatus(Status.ACTIVE);
         log.info("Create department success {}", department);
         return mapDepartmentToResponseDto(departmentRepository.save(department));
     }

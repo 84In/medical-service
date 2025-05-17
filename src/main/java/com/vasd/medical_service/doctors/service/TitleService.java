@@ -1,5 +1,6 @@
 package com.vasd.medical_service.doctors.service;
 
+import com.vasd.medical_service.Enum.Status;
 import com.vasd.medical_service.doctors.dto.request.CreateTitleDto;
 import com.vasd.medical_service.doctors.dto.request.UpdateTitleDto;
 import com.vasd.medical_service.doctors.dto.response.TitleResponseDto;
@@ -26,7 +27,7 @@ public class TitleService {
         Title title = new Title();
         title.setName(creatTitleDto.getName());
         title.setDescription(creatTitleDto.getDescription());
-        title.setStatus(1);
+        title.setStatus(Status.ACTIVE);
         log.info("Creating title {}", title);
         return mapTitleToTitleDto(titleRepository.save(title));
     }

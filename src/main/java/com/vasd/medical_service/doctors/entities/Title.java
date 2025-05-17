@@ -1,5 +1,6 @@
 package com.vasd.medical_service.doctors.entities;
 
+import com.vasd.medical_service.Enum.Status;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,5 +21,8 @@ public class Title {
 
     private String name;
     private String description;
-    private Integer status;
+
+    @Enumerated(EnumType.ORDINAL)
+    @Column(nullable = false)
+    private Status status;
 }

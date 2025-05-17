@@ -8,6 +8,7 @@ import com.vasd.medical_service.doctors.entities.Doctor;
 import com.vasd.medical_service.doctors.service.DoctorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,7 +45,7 @@ public class DoctorController {
     @PostMapping
     @Operation(summary = "Create new doctor information", description = "Return the newly created doctor information")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "0", description = "New doctor information")
-    public ApiResponse<DoctorResponseDto> createDoctor(CreateDoctorDto request) {
+    public ApiResponse<DoctorResponseDto> createDoctor(@RequestBody @Valid CreateDoctorDto request) {
         return ApiResponse.<DoctorResponseDto>builder()
                 .result(doctorService.createDoctor(request))
                 .build();
