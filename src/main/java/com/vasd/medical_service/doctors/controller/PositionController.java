@@ -8,6 +8,7 @@ import com.vasd.medical_service.doctors.service.PositionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,7 +44,7 @@ public class PositionController {
     @PostMapping
     @Operation(summary = "Create new position information", description = "Return the newly created position information")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "0", description = "Newly created position information")
-    public ApiResponse<PositionResponseDto> createPosition(@RequestBody CreatePositionDto request) {
+    public ApiResponse<PositionResponseDto> createPosition(@RequestBody @Valid CreatePositionDto request) {
         return ApiResponse.<PositionResponseDto>builder()
                 .result(positionService.createPosition(request))
                 .build();

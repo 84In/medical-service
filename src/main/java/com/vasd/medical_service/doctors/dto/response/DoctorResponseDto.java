@@ -1,5 +1,6 @@
 package com.vasd.medical_service.doctors.dto.response;
 
+import com.vasd.medical_service.Enum.Status;
 import lombok.Builder;
 import lombok.Data;
 
@@ -12,7 +13,7 @@ public class DoctorResponseDto {
     private String avatarUrl;
     private String introduction;
     private String experience_years;
-    private Integer status;
+    private Status status;
     private DepartmentResponseDto department;
     private PositionResponseDto position;
     private TitleResponseDto title;

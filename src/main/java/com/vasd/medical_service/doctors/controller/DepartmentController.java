@@ -7,6 +7,7 @@ import com.vasd.medical_service.doctors.dto.response.DepartmentResponseDto;
 import com.vasd.medical_service.doctors.service.DepartmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,7 +43,7 @@ public class DepartmentController {
     @Operation(summary = "Create new specialty", description = "Return the newly created specialty information")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "0", description = "Newly created specialty information")
     @PostMapping
-    public ApiResponse<DepartmentResponseDto> createDepartment(@RequestBody CreateDepartmentDto request) {
+    public ApiResponse<DepartmentResponseDto> createDepartment(@RequestBody @Valid CreateDepartmentDto request) {
         return ApiResponse.<DepartmentResponseDto>builder()
                 .result(departmentService.createDepartment(request))
                 .build();
