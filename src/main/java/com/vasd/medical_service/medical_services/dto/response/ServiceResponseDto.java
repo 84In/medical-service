@@ -1,5 +1,6 @@
 package com.vasd.medical_service.medical_services.dto.response;
 
+import com.vasd.medical_service.Enum.Status;
 import lombok.Builder;
 import lombok.Data;
 
@@ -15,7 +16,7 @@ public class ServiceResponseDto {
     private String thumbnailUrl;
     private String descriptionShort;
     private String contentHtml;
-    private Integer status;
+    private Status status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private ServiceTypeResponseDto serviceType;

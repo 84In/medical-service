@@ -42,6 +42,8 @@ public enum ErrorCode {
     //Service Error
     SERVICE_NOT_FOUND(320, "Service not found", HttpStatus.BAD_REQUEST),
     SERVICE_EXISTS(321, "Service already exists", HttpStatus.BAD_REQUEST),
+    //Slug Error
+    SLUG_EXISTS(322, "Slug already exists", HttpStatus.BAD_REQUEST),
 
     //SQL Error
     DATA_INTEGRITY_VIOLATION(1002, "Lỗi ràng buộc dữ liệu", HttpStatus.BAD_REQUEST),

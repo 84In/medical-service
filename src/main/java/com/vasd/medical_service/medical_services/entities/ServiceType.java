@@ -1,5 +1,6 @@
 package com.vasd.medical_service.medical_services.entities;
 
+import com.vasd.medical_service.Enum.Status;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,9 +21,9 @@ public class ServiceType {
 
     private String name;
     private String description;
-    private Integer status;
+    private Status status;
 
     @OneToMany(mappedBy = "serviceType")
-    private List<Service> services;
+    private List<Services> services;
 
 }
