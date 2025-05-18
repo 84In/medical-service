@@ -44,6 +44,11 @@ public enum ErrorCode {
     SERVICE_EXISTS(321, "Service already exists", HttpStatus.BAD_REQUEST),
     //Slug Error
     SLUG_EXISTS(322, "Slug already exists", HttpStatus.BAD_REQUEST),
+    //New Error
+    NEWS_TYPE_NOT_FOUND(323, "News type not found", HttpStatus.BAD_REQUEST),
+    NEWS_TYPE_EXISTS(324, "News type already exists", HttpStatus.BAD_REQUEST),
+    NEWS_NOT_FOUND(325, "News not found", HttpStatus.BAD_REQUEST),
+    NEWS_EXISTS(326, "News already exists", HttpStatus.BAD_REQUEST),
 
     //SQL Error
     DATA_INTEGRITY_VIOLATION(1002, "Lỗi ràng buộc dữ liệu", HttpStatus.BAD_REQUEST),
