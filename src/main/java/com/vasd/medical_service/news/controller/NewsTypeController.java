@@ -52,7 +52,7 @@ public class NewsTypeController {
 
     @PutMapping("/{newsTypeId}")
     @Operation(summary = "Update news type information by ID", description = "Return the recently updated news type information")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "0", description = "Recently updated user information")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "0", description = "Recently updated news type information")
     public ApiResponse<NewsTypeResponseDto> updateNewsTypeById(@PathVariable Long newsTypeId, @RequestBody UpdateNewsTypeDto request) {
         return ApiResponse.<NewsTypeResponseDto>builder()
                 .result(newsTypeService.updateNewsType(newsTypeId, request))
@@ -63,6 +63,7 @@ public class NewsTypeController {
     @Operation(summary = "Delete news type information by ID", description = "Return successful deletion message")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "0",description = "Response message")
     public ApiResponse<Void> deleteNewsTypeById(@PathVariable Long newsTypeId) {
+        newsTypeService.deleteNewsType(newsTypeId);
         return ApiResponse.<Void>builder()
                 .message("Delete news type information")
                 .build();
