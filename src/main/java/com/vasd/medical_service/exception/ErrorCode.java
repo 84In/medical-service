@@ -50,6 +50,9 @@ public enum ErrorCode {
     NEWS_NOT_FOUND(325, "News not found", HttpStatus.BAD_REQUEST),
     NEWS_EXISTS(326, "News already exists", HttpStatus.BAD_REQUEST),
 
+    //Upload Error
+    FILE_EMPTY(400, "Invalid input or missing file", HttpStatus.BAD_REQUEST),
+
     //SQL Error
     DATA_INTEGRITY_VIOLATION(1002, "Lỗi ràng buộc dữ liệu", HttpStatus.BAD_REQUEST),
     ;
