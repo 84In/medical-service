@@ -26,10 +26,12 @@ public class AuthInitializer implements CommandLineRunner {
         if (roleRepository.count() == 0) {
             Role adminRole = new Role();
             adminRole.setName("ADMIN");
-            Role userRole = new Role();
-            userRole.setName("USER");
-            roleRepository.saveAll(List.of(adminRole, userRole));
-            log.info("Roles initialized");
+            Role contentManagerRole = new Role();
+            contentManagerRole.setName("CONTENT_MANAGER");
+            Role staffRole = new Role();
+            staffRole.setName("STAFF");
+            roleRepository.saveAll(List.of(adminRole, contentManagerRole, staffRole));
+            log.info("Roles initialized (Admin, ContentManager, Staff)");
         }
 
         if (userRepository.findUserByUsername("admin").isEmpty()) {
