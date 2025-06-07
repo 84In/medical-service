@@ -36,19 +36,21 @@ public enum ErrorCode {
     //Doctor Error
     DOCTOR_NOT_FOUND(316, "Doctor not found", HttpStatus.BAD_REQUEST),
     DOCTOR_EXISTS(317, "Doctor already exists", HttpStatus.BAD_REQUEST),
+    SPECIALTY_NOT_FOUND(318, "Specialty not found", HttpStatus.BAD_REQUEST),
+    SPECIALTY_EXISTS(319, "Specialty already exists", HttpStatus.BAD_REQUEST),
     //ServiceType Error
-    SERVICE_TYPE_NOT_FOUND(318, "Service type not found", HttpStatus.BAD_REQUEST),
-    SERVICE_TYPE_EXISTS(319, "Service type already exists", HttpStatus.BAD_REQUEST),
+    SERVICE_TYPE_NOT_FOUND(320, "Service type not found", HttpStatus.BAD_REQUEST),
+    SERVICE_TYPE_EXISTS(321, "Service type already exists", HttpStatus.BAD_REQUEST),
     //Service Error
-    SERVICE_NOT_FOUND(320, "Service not found", HttpStatus.BAD_REQUEST),
-    SERVICE_EXISTS(321, "Service already exists", HttpStatus.BAD_REQUEST),
+    SERVICE_NOT_FOUND(322, "Service not found", HttpStatus.BAD_REQUEST),
+    SERVICE_EXISTS(323, "Service already exists", HttpStatus.BAD_REQUEST),
     //Slug Error
-    SLUG_EXISTS(322, "Slug already exists", HttpStatus.BAD_REQUEST),
+    SLUG_EXISTS(324, "Slug already exists", HttpStatus.BAD_REQUEST),
     //New Error
-    NEWS_TYPE_NOT_FOUND(323, "News type not found", HttpStatus.BAD_REQUEST),
-    NEWS_TYPE_EXISTS(324, "News type already exists", HttpStatus.BAD_REQUEST),
-    NEWS_NOT_FOUND(325, "News not found", HttpStatus.BAD_REQUEST),
-    NEWS_EXISTS(326, "News already exists", HttpStatus.BAD_REQUEST),
+    NEWS_TYPE_NOT_FOUND(325, "News type not found", HttpStatus.BAD_REQUEST),
+    NEWS_TYPE_EXISTS(326, "News type already exists", HttpStatus.BAD_REQUEST),
+    NEWS_NOT_FOUND(327, "News not found", HttpStatus.BAD_REQUEST),
+    NEWS_EXISTS(328, "News already exists", HttpStatus.BAD_REQUEST),
 
     //Upload Error
     FILE_EMPTY(400, "Invalid input or missing file", HttpStatus.BAD_REQUEST),
