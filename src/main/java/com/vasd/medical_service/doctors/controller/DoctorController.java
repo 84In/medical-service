@@ -4,12 +4,16 @@ import com.vasd.medical_service.common.ApiResponse;
 import com.vasd.medical_service.doctors.dto.request.CreateDoctorDto;
 import com.vasd.medical_service.doctors.dto.request.UpdateDoctorDto;
 import com.vasd.medical_service.doctors.dto.response.DoctorResponseDto;
-import com.vasd.medical_service.doctors.entities.Doctor;
 import com.vasd.medical_service.doctors.service.DoctorService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,6 +35,31 @@ public class DoctorController {
                 .result(doctorService.getAllDoctors())
                 .build();
     }
+    @GetMapping("/search")
+    @Operation(
+            summary = "Search doctors with pagination",
+            description = "Returns a paginated list of doctors filtered by keyword. Keyword can match name, department, introduction, or title.",
+            parameters = {
+                    @Parameter(name = "page", description = "Page number (default is 0)", example = "0"),
+                    @Parameter(name = "size", description = "Number of records per page (default is 10)", example = "10"),
+                    @Parameter(name = "keyword", description = "Search keyword (name, department, introduction, or title)", example = "cardiology")
+            },
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "0", description = "Paginated list of doctors returned successfully")
+            }
+    )
+    public ApiResponse<Page<DoctorResponseDto>> getDoctors(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "") String keyword
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("name"));
+        Page<DoctorResponseDto> doctorDtos = doctorService.getAllDoctors(pageable, keyword);
+        return ApiResponse.<Page<DoctorResponseDto>>builder()
+                .result(doctorDtos)
+                .build();
+    }
+
 
     @GetMapping("/{doctorId}")
     @Operation(summary = "Fetch doctor details by ID", description = "Return doctor information")

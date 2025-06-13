@@ -14,6 +14,8 @@ import com.vasd.medical_service.exception.ErrorCode;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalTime;
@@ -167,6 +169,19 @@ public class DoctorService {
         List<Doctor> doctors = doctorRepository.findAll();
         return doctors.stream().map(this::mapDoctor).collect(Collectors.toList());
     }
+
+    public Page<DoctorResponseDto> getAllDoctors(Pageable pageable, String keyword) {
+        Page<Doctor> doctorPage;
+
+        if (keyword == null || keyword.trim().isEmpty()) {
+            doctorPage = doctorRepository.findAll(pageable);
+        } else {
+            doctorPage = doctorRepository.searchDoctors(keyword.trim(), pageable);
+        }
+
+        return doctorPage.map(this::mapDoctor);
+    }
+
 
     public DoctorResponseDto getDoctor(Long doctorId) {
         Doctor doctor = doctorRepository.findById(doctorId).orElseThrow(()-> new AppException(ErrorCode.DOCTOR_NOT_FOUND));
