@@ -1,10 +1,12 @@
 package com.vasd.medical_service.doctors.controller;
 
+import com.vasd.medical_service.Enum.Status;
 import com.vasd.medical_service.common.ApiResponse;
 import com.vasd.medical_service.doctors.dto.request.CreateDoctorDto;
 import com.vasd.medical_service.doctors.dto.request.UpdateDoctorDto;
 import com.vasd.medical_service.doctors.dto.response.DoctorResponseDto;
 import com.vasd.medical_service.doctors.service.DoctorService;
+import com.vasd.medical_service.dto.PaginatedResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -48,15 +50,17 @@ public class DoctorController {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "0", description = "Paginated list of doctors returned successfully")
             }
     )
-    public ApiResponse<Page<DoctorResponseDto>> getDoctors(
+    public ApiResponse<PaginatedResponse<DoctorResponseDto>> getDoctors(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "") String keyword
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(required = false) Status status,
+            @RequestParam(required = false) Long departmentId
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("name"));
-        Page<DoctorResponseDto> doctorDtos = doctorService.getAllDoctors(pageable, keyword);
-        return ApiResponse.<Page<DoctorResponseDto>>builder()
-                .result(doctorDtos)
+        Page<DoctorResponseDto> doctorDtos = doctorService.getAllDoctors(pageable, keyword, status, departmentId);
+        return ApiResponse.<PaginatedResponse<DoctorResponseDto>>builder()
+                .result(new PaginatedResponse<>(doctorDtos))
                 .build();
     }
 

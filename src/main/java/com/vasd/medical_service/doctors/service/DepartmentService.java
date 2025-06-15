@@ -5,11 +5,14 @@ import com.vasd.medical_service.doctors.dto.request.CreateDepartmentDto;
 import com.vasd.medical_service.doctors.dto.request.UpdateDepartmentDto;
 import com.vasd.medical_service.doctors.dto.response.DepartmentResponseDto;
 import com.vasd.medical_service.doctors.entities.Department;
+import com.vasd.medical_service.doctors.entities.Doctor;
 import com.vasd.medical_service.doctors.repository.DepartmentRepository;
 import com.vasd.medical_service.exception.AppException;
 import com.vasd.medical_service.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -35,6 +38,15 @@ public class DepartmentService {
         List<Department> departments = departmentRepository.findAll();
         log.info("Get all department success");
         return departments.stream().map(this::mapDepartmentToResponseDto).collect(Collectors.toList());
+    }
+
+    public Page<DepartmentResponseDto> getAllDepartments(Pageable pageable, String keyword, Status status) {
+        Page<Department> departmentsPage = departmentRepository.searchDepartments(
+                keyword != null && !keyword.trim().isEmpty() ? keyword.trim() : null,
+                status,
+                pageable
+        );
+        return departmentsPage.map(this::mapDepartmentToResponseDto);
     }
 
     public DepartmentResponseDto getDepartment(Long id) {

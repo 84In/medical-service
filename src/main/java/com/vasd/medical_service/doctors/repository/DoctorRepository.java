@@ -1,5 +1,6 @@
 package com.vasd.medical_service.doctors.repository;
 
+import com.vasd.medical_service.Enum.Status;
 import com.vasd.medical_service.doctors.entities.Doctor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,10 +15,20 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     @Query("""
     SELECT d FROM Doctor d
     WHERE 
-        LOWER(d.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-        LOWER(d.introduction) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-        LOWER(d.title.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-        LOWER(d.department.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        (:keyword IS NULL OR :keyword = '' OR 
+            LOWER(d.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+            LOWER(d.introduction) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+            LOWER(d.title.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+            LOWER(d.department.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        )
+        AND (:status IS NULL OR d.status = :status)
+        AND (:departmentId IS NULL OR d.department.id = :departmentId)
 """)
-    Page<Doctor> searchDoctors(@Param("keyword") String keyword, Pageable pageable);
+    Page<Doctor> searchDoctors(
+            @Param("keyword") String keyword,
+            @Param("status") Status status,
+            @Param("departmentId") Long departmentId,
+            Pageable pageable
+    );
+
 }

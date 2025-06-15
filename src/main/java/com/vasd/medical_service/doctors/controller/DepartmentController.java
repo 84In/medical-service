@@ -1,14 +1,24 @@
 package com.vasd.medical_service.doctors.controller;
 
+import com.vasd.medical_service.Enum.Status;
 import com.vasd.medical_service.common.ApiResponse;
 import com.vasd.medical_service.doctors.dto.request.CreateDepartmentDto;
 import com.vasd.medical_service.doctors.dto.request.UpdateDepartmentDto;
 import com.vasd.medical_service.doctors.dto.response.DepartmentResponseDto;
+import com.vasd.medical_service.doctors.dto.response.DoctorResponseDto;
 import com.vasd.medical_service.doctors.service.DepartmentService;
+import com.vasd.medical_service.dto.PaginatedResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,6 +47,40 @@ public class DepartmentController {
 
         return ApiResponse.<DepartmentResponseDto>builder()
                 .result(departmentService.getDepartment(departmentId))
+                .build();
+    }
+
+    @GetMapping("/search")
+    @Operation(
+            summary = "Search departments",
+            description = "Returns a paginated list of departments, supporting optional keyword search by name and filtering by status (ACTIVE or INACTIVE).",
+            parameters = {
+                    @Parameter(name = "page", description = "Current page number (starting from 0)", example = "0"),
+                    @Parameter(name = "size", description = "Number of items per page", example = "10"),
+                    @Parameter(name = "keyword", description = "Keyword to search by department name", example = "internal medicine"),
+                    @Parameter(name = "status", description = "Filter by department status (ACTIVE or INACTIVE)", example = "ACTIVE")
+            },
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "Paginated list of departments",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = PaginatedResponse.class)
+                            )
+                    )
+            }
+    )
+    public ApiResponse<PaginatedResponse<DepartmentResponseDto>> searchDepartments(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(required = false) Status status
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("name"));
+        Page<DepartmentResponseDto> departmentDtos = departmentService.getAllDepartments(pageable, keyword, status);
+        return ApiResponse.<PaginatedResponse<DepartmentResponseDto>>builder()
+                .result(new PaginatedResponse<>(departmentDtos))
                 .build();
     }
 

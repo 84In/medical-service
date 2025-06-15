@@ -1,5 +1,6 @@
 package com.vasd.medical_service.doctors.service;
 
+import com.vasd.medical_service.Enum.Status;
 import com.vasd.medical_service.doctors.dto.*;
 import com.vasd.medical_service.doctors.dto.request.CreateDoctorDto;
 import com.vasd.medical_service.doctors.dto.request.UpdateDoctorDto;
@@ -170,17 +171,17 @@ public class DoctorService {
         return doctors.stream().map(this::mapDoctor).collect(Collectors.toList());
     }
 
-    public Page<DoctorResponseDto> getAllDoctors(Pageable pageable, String keyword) {
-        Page<Doctor> doctorPage;
-
-        if (keyword == null || keyword.trim().isEmpty()) {
-            doctorPage = doctorRepository.findAll(pageable);
-        } else {
-            doctorPage = doctorRepository.searchDoctors(keyword.trim(), pageable);
-        }
-
+    public Page<DoctorResponseDto> getAllDoctors(Pageable pageable, String keyword, Status status, Long departmentId) {
+        Page<Doctor> doctorPage = doctorRepository.searchDoctors(
+                keyword != null && !keyword.trim().isEmpty() ? keyword.trim() : null,
+                status,
+                departmentId,
+                pageable
+        );
         return doctorPage.map(this::mapDoctor);
     }
+
+
 
 
     public DoctorResponseDto getDoctor(Long doctorId) {
