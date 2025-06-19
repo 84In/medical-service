@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/upload")
+@RequestMapping("/api/v1/upload")
 @RequiredArgsConstructor
 @Tag(name = "Upload controller", description = "APIs for uploading images to Cloudinary with folder organization")
 public class UploadController {

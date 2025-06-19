@@ -12,6 +12,7 @@ import com.vasd.medical_service.doctors.entities.*;
 import com.vasd.medical_service.doctors.repository.*;
 import com.vasd.medical_service.exception.AppException;
 import com.vasd.medical_service.exception.ErrorCode;
+import com.vasd.medical_service.upload.service.ImageUsageProcessor;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,117 +39,130 @@ public class DoctorService {
     private final WorkingHourRepository workingHourRepository;
     private final AchievementRepository achievementRepository;
     private final EducationRepository educationRepository;
+    private final ImageUsageProcessor imageUsageProcessor;
 
     @Transactional
-    public DoctorResponseDto createDoctor(CreateDoctorDto dto){
-        Doctor doctor = new Doctor();
-        doctor.setName(dto.getName());
-        doctor.setAvatarUrl(dto.getAvatarUrl());
-        doctor.setIntroduction(dto.getIntroduction());
-        doctor.setExperienceYears(dto.getExperienceYears());
-        doctor.setEmail(dto.getEmail());
-        doctor.setPhone(dto.getPhone());
-        doctor.setStatus(dto.getStatus());
+    public DoctorResponseDto createDoctor(CreateDoctorDto dto) {
+        try {
+            Doctor doctor = new Doctor();
+            doctor.setName(dto.getName());
+            doctor.setAvatarUrl(dto.getAvatarUrl());
+            doctor.setIntroduction(dto.getIntroduction());
+            doctor.setExperienceYears(dto.getExperienceYears());
+            doctor.setEmail(dto.getEmail());
+            doctor.setPhone(dto.getPhone());
+            doctor.setStatus(dto.getStatus());
 
-        if (dto.getSpecialtyIds() != null && !dto.getSpecialtyIds().isEmpty()) {
-            List<Specialty> specialties = specialtyRepository.findAllById(dto.getSpecialtyIds());
-            if (specialties.size() != dto.getSpecialtyIds().size()) {
-                throw new AppException(ErrorCode.SPECIALTY_NOT_FOUND); // Hoặc tự kiểm tra id nào bị thiếu
+            if (dto.getSpecialtyIds() != null && !dto.getSpecialtyIds().isEmpty()) {
+                List<Specialty> specialties = specialtyRepository.findAllById(dto.getSpecialtyIds());
+                if (specialties.size() != dto.getSpecialtyIds().size()) {
+                    throw new AppException(ErrorCode.SPECIALTY_NOT_FOUND); // Hoặc tự kiểm tra id nào bị thiếu
+                }
+                doctor.setSpecialties(specialties);
             }
-            doctor.setSpecialties(specialties);
+
+            doctor.setDepartment(
+                    departmentRepository.findById(dto.getDepartmentId())
+                            .orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_FOUND))
+            );
+            doctor.setPosition(
+                    positionRepository.findById(dto.getPositionId())
+                            .orElseThrow(() -> new AppException(ErrorCode.POSITION_NOT_FOUND))
+            );
+            doctor.setTitle(
+                    titleRepository.findById(dto.getTitleId())
+                            .orElseThrow(() -> new AppException(ErrorCode.TITLE_NOT_FOUND))
+            );
+
+            Doctor rsdoctor = doctorRepository.save(doctor);
+            log.info("save doctor {}", rsdoctor);
+
+            if (dto.getWorkingHours() != null) {
+
+                List<WorkingHour> workingHours = dto.getWorkingHours().stream().map(whDto -> {
+                    WorkingHour wh = new WorkingHour();
+                    wh.setDoctor(rsdoctor);
+                    wh.setDayOfWeek(whDto.getDayOfWeek());
+                    wh.setStartTime(whDto.getStartTime());
+                    wh.setEndTime(whDto.getEndTime());
+                    wh.setIsAvailable(whDto.getIsAvailable());
+                    return wh;
+                }).toList();
+                workingHourRepository.saveAll(workingHours);
+                rsdoctor.setWorkingHours(workingHours);
+                log.info("save workingHours");
+            }
+
+            if (dto.getEducation() != null) {
+                List<Education> educations = dto.getEducation().stream().map(edDto -> {
+                    Education ed = new Education();
+                    ed.setDoctor(rsdoctor);
+                    ed.setDegree(edDto.getDegree());
+                    ed.setInstitution(edDto.getInstitution());
+                    ed.setYear(edDto.getYear());
+                    ed.setDescription(edDto.getDescription());
+                    return ed;
+                }).collect(Collectors.toList());
+                educationRepository.saveAll(educations);
+                rsdoctor.setEducation(educations);
+                log.info("save education");
+            }
+
+            if (dto.getWorkExperience() != null) {
+                List<Experience> experiences = dto.getWorkExperience().stream().map(exDto -> {
+                    Experience ex = new Experience();
+                    ex.setDoctor(rsdoctor);
+                    ex.setPosition(exDto.getPosition());
+                    ex.setOrganization(exDto.getOrganization());
+                    ex.setStartYear(exDto.getStartYear());
+                    ex.setEndYear(exDto.getEndYear());
+                    ex.setDescription(exDto.getDescription());
+                    return ex;
+                }).collect(Collectors.toList());
+                experienceRepository.saveAll(experiences);
+                rsdoctor.setWorkExperience(experiences);
+                log.info("save workExperience");
+            }
+
+            if (dto.getAchievements() != null) {
+                List<Achievement> achievements = dto.getAchievements().stream().map(acDto -> {
+                    Achievement ac = new Achievement();
+                    ac.setDoctor(rsdoctor);
+                    ac.setTitle(acDto.getTitle());
+                    ac.setYear(acDto.getYear());
+                    ac.setDescription(acDto.getDescription());
+                    ac.setType(acDto.getType());
+                    return ac;
+                }).collect(Collectors.toList());
+                achievementRepository.saveAll(achievements);
+                rsdoctor.setAchievements(achievements);
+                log.info("save achievements");
+            }
+
+            imageUsageProcessor.processImageUrl(dto.getAvatarUrl());
+            log.info("process image");
+
+            return mapDoctor(rsdoctor);
+        } catch (Exception e) {
+            log.error("❌ Lỗi khi tạo doctor, transaction sẽ rollback", e);
+            throw e; // hoặc AppException
         }
-
-        doctor.setDepartment(
-                departmentRepository.findById(dto.getDepartmentId())
-                        .orElseThrow(()->new AppException(ErrorCode.DEPARTMENT_NOT_FOUND))
-        );
-        doctor.setPosition(
-                positionRepository.findById(dto.getPositionId())
-                        .orElseThrow(()-> new AppException(ErrorCode.POSITION_NOT_FOUND))
-        );
-        doctor.setTitle(
-                titleRepository.findById(dto.getTitleId())
-                        .orElseThrow(()-> new AppException(ErrorCode.TITLE_NOT_FOUND))
-        );
-
-        Doctor rsdoctor = doctorRepository.save(doctor);
-
-        if(dto.getWorkingHours() != null){
-
-            List<WorkingHour> workingHours = dto.getWorkingHours().stream().map(whDto->{
-                WorkingHour wh = new WorkingHour();
-                wh.setDoctor(rsdoctor);
-                wh.setDayOfWeek(whDto.getDayOfWeek());
-                wh.setStartTime(whDto.getStartTime());
-                wh.setEndTime(whDto.getEndTime());
-                wh.setIsAvailable(whDto.getIsAvailable());
-                return wh;
-            }).toList();
-            workingHourRepository.saveAll(workingHours);
-            rsdoctor.setWorkingHours(workingHours);
-        }
-
-        if (dto.getEducation() != null) {
-            List<Education> educations = dto.getEducation().stream().map(edDto -> {
-                Education ed = new Education();
-                ed.setDoctor(rsdoctor);
-                ed.setDegree(edDto.getDegree());
-                ed.setInstitution(edDto.getInstitution());
-                ed.setYear(edDto.getYear());
-                ed.setDescription(edDto.getDescription());
-                return ed;
-            }).collect(Collectors.toList());
-            educationRepository.saveAll(educations);
-            rsdoctor.setEducation(educations);
-        }
-
-        if (dto.getWorkExperience() != null) {
-            List<Experience> experiences = dto.getWorkExperience().stream().map(exDto -> {
-                Experience ex = new Experience();
-                ex.setDoctor(rsdoctor);
-                ex.setPosition(exDto.getPosition());
-                ex.setOrganization(exDto.getOrganization());
-                ex.setStartYear(exDto.getStartYear());
-                ex.setEndYear(exDto.getEndYear());
-                ex.setDescription(exDto.getDescription());
-                return ex;
-            }).collect(Collectors.toList());
-            experienceRepository.saveAll(experiences);
-            rsdoctor.setWorkExperience(experiences);
-        }
-
-        if (dto.getAchievements() != null) {
-            List<Achievement> achievements = dto.getAchievements().stream().map(acDto -> {
-                Achievement ac = new Achievement();
-                ac.setDoctor(rsdoctor);
-                ac.setTitle(acDto.getTitle());
-                ac.setYear(acDto.getYear());
-                ac.setDescription(acDto.getDescription());
-                ac.setType(acDto.getType());
-                return ac;
-            }).collect(Collectors.toList());
-            achievementRepository.saveAll(achievements);
-            rsdoctor.setAchievements(achievements);
-        }
-
-
-        return mapDoctor(rsdoctor);
     }
 
     @Transactional
     public DoctorResponseDto updateDoctor(Long doctorId, UpdateDoctorDto dto) {
 
         Doctor doctor = doctorRepository.findById(doctorId)
-                .orElseThrow(()-> new AppException(ErrorCode.DOCTOR_NOT_FOUND));
+                .orElseThrow(() -> new AppException(ErrorCode.DOCTOR_NOT_FOUND));
 
         doctor.setName(dto.getName());
         doctor.setAvatarUrl(dto.getAvatarUrl());
         doctor.setIntroduction(dto.getIntroduction());
         doctor.setExperienceYears(dto.getExperienceYears());
 
-        Department department = departmentRepository.findById(dto.getDepartmentId()).orElseThrow(()-> new AppException(ErrorCode.DEPARTMENT_NOT_FOUND));
-        Position position = positionRepository.findById(dto.getPositionId()).orElseThrow(()->new AppException(ErrorCode.POSITION_NOT_FOUND));
-        Title title = titleRepository.findById(dto.getTitleId()).orElseThrow(()->new AppException(ErrorCode.TITLE_NOT_FOUND));
+        Department department = departmentRepository.findById(dto.getDepartmentId()).orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_FOUND));
+        Position position = positionRepository.findById(dto.getPositionId()).orElseThrow(() -> new AppException(ErrorCode.POSITION_NOT_FOUND));
+        Title title = titleRepository.findById(dto.getTitleId()).orElseThrow(() -> new AppException(ErrorCode.TITLE_NOT_FOUND));
 
         doctor.setDepartment(department);
         doctor.setPosition(position);
@@ -163,11 +177,14 @@ public class DoctorService {
         updateExperience(doctor, dto.getWorkExperience());
         updateAchievements(doctor, dto.getAchievements());
 
+        imageUsageProcessor.processImageUrl(dto.getAvatarUrl());
+
         return mapDoctor(doctorRepository.save(doctor));
     }
 
     public List<DoctorResponseDto> getAllDoctors() {
         List<Doctor> doctors = doctorRepository.findAll();
+        log.info("Get all doctors");
         return doctors.stream().map(this::mapDoctor).collect(Collectors.toList());
     }
 
@@ -178,14 +195,13 @@ public class DoctorService {
                 departmentId,
                 pageable
         );
+        log.info("Get all doctors search by: {}, {} and {} ", keyword, status, departmentId);
         return doctorPage.map(this::mapDoctor);
     }
 
 
-
-
     public DoctorResponseDto getDoctor(Long doctorId) {
-        Doctor doctor = doctorRepository.findById(doctorId).orElseThrow(()-> new AppException(ErrorCode.DOCTOR_NOT_FOUND));
+        Doctor doctor = doctorRepository.findById(doctorId).orElseThrow(() -> new AppException(ErrorCode.DOCTOR_NOT_FOUND));
         return mapDoctor(doctor);
     }
 
@@ -202,6 +218,7 @@ public class DoctorService {
         List<Specialty> specialties = new ArrayList<>(specialtyRepository.findAllById(specialtyIds));
         doctor.setSpecialties(specialties);
     }
+
     private void updateWorkingHours(Doctor doctor, List<WorkingHourDTO> dtos) {
         if (dtos == null) {
             workingHourRepository.deleteByDoctorId(doctor.getId());
@@ -342,7 +359,7 @@ public class DoctorService {
     }
 
 
-    private DoctorResponseDto mapDoctor(Doctor doctor){
+    private DoctorResponseDto mapDoctor(Doctor doctor) {
         return DoctorResponseDto.builder()
                 .id(doctor.getId())
                 .name(doctor.getName())
@@ -368,16 +385,12 @@ public class DoctorService {
                         .status(doctor.getTitle().getStatus())
                         .build())
                 .specialties(
-                        doctor.getSpecialties().stream().map(
-                                specialty -> {
-                                    SpecialtyDto sDto = new SpecialtyDto();
-                                    sDto.setId(specialty.getId());
-                                    sDto.setName(specialty.getName());
-                                    sDto.setDescription(specialty.getDescription());
-                                    sDto.setStatus(specialty.getStatus());
-                                    return sDto;
-                                }
-                        ).collect(Collectors.toList())
+                        doctor.getSpecialties().stream().map(s -> new SpecialtyDto(
+                                s.getId(),
+                                s.getName(),
+                                s.getDescription(),
+                                s.getStatus()
+                        )).collect(Collectors.toList())
                 )
                 .achievements(mapAchievement(doctor.getAchievements()))
                 .education(mapEducation(doctor.getEducation()))
@@ -385,7 +398,8 @@ public class DoctorService {
                 .workingHours(mapWorkingHour(doctor.getWorkingHours()))
                 .build();
     }
-    private List<AchievementDTO> mapAchievement(List<Achievement> achievements){
+
+    private List<AchievementDTO> mapAchievement(List<Achievement> achievements) {
         achievements.sort(Comparator.comparing(Achievement::getYear));
         return achievements.stream().map(achievement -> {
 
@@ -398,9 +412,11 @@ public class DoctorService {
             return aDto;
         }).collect(Collectors.toList());
     }
-    private List<EducationDTO> mapEducation(List<Education> educations){
-        educations.sort(Comparator.comparing(Education::getYear));
-        return educations.stream().map(education -> {
+
+    private List<EducationDTO> mapEducation(List<Education> educations) {
+        List<Education> sortedList = new ArrayList<>(educations);
+        sortedList.sort(Comparator.comparing(Education::getYear));
+        return sortedList.stream().map(education -> {
             EducationDTO eDto = new EducationDTO();
             eDto.setId(education.getId());
             eDto.setDescription(education.getDescription());
@@ -410,9 +426,12 @@ public class DoctorService {
             return eDto;
         }).collect(Collectors.toList());
     }
-    private List<ExperienceDTO> mapExperience(List<Experience> experiences){
-        experiences.sort(Comparator.comparing(Experience::getStartYear));
-        return experiences.stream().map(experience -> {
+
+
+    private List<ExperienceDTO> mapExperience(List<Experience> experiences) {
+        List<Experience> sortedList = new ArrayList<>(experiences);
+        sortedList.sort(Comparator.comparing(Experience::getStartYear));
+        return sortedList.stream().map(experience -> {
             ExperienceDTO eDto = new ExperienceDTO();
             eDto.setId(experience.getId());
             eDto.setStartYear(experience.getStartYear());
@@ -423,10 +442,13 @@ public class DoctorService {
             return eDto;
         }).collect(Collectors.toList());
     }
-    private List<WorkingHourDTO> mapWorkingHour(List<WorkingHour> workingHours){
-        workingHours.sort(Comparator.comparing((WorkingHour wh) -> wh.getDayOfWeek().ordinal())
-                .thenComparing(w-> LocalTime.parse(w.getStartTime())));
-        return workingHours.stream().map(workingHour -> {
+
+
+    private List<WorkingHourDTO> mapWorkingHour(List<WorkingHour> workingHours) {
+        List<WorkingHour> sortedList = new ArrayList<>(workingHours);
+        sortedList.sort(Comparator.comparing((WorkingHour wh) -> wh.getDayOfWeek().ordinal())
+                .thenComparing(w -> LocalTime.parse(w.getStartTime())));
+        return sortedList.stream().map(workingHour -> {
             WorkingHourDTO whDto = new WorkingHourDTO();
             whDto.setId(workingHour.getId());
             whDto.setDayOfWeek(workingHour.getDayOfWeek());
@@ -436,5 +458,6 @@ public class DoctorService {
             return whDto;
         }).collect(Collectors.toList());
     }
+
 
 }

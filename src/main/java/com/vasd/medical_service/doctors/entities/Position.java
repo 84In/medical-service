@@ -21,6 +21,7 @@ public class Position {
 
     private String name;
 
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Enumerated(EnumType.ORDINAL)

@@ -1,6 +1,8 @@
 package com.vasd.medical_service.doctors.service;
 
+import com.vasd.medical_service.Enum.Status;
 import com.vasd.medical_service.doctors.dto.SpecialtyDto;
+import com.vasd.medical_service.doctors.entities.Doctor;
 import com.vasd.medical_service.doctors.entities.Specialty;
 import com.vasd.medical_service.doctors.repository.SpecialtyRepository;
 import com.vasd.medical_service.exception.AppException;
@@ -8,6 +10,8 @@ import com.vasd.medical_service.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -45,6 +49,16 @@ public class SpecialtyService {
         List<Specialty> specialty = specialtyRepository.findAllByNameContainingIgnoreCase(name);
         log.info("Get all specialties by name: {}!", name);
         return specialty.stream().map(this::mapToDto).collect(Collectors.toList());
+    }
+
+    public Page<SpecialtyDto> getAllSpecialty(Pageable pageable, String keyword, Status status) {
+        Page<Specialty> specialties = specialtyRepository.searchSpecialty(
+                keyword != null && !keyword.trim().isEmpty() ? keyword.trim() : null,
+                status,
+                pageable
+        );
+        log.info("Get all specialties!");
+        return specialties.map(this::mapToDto);
     }
 
     public SpecialtyDto updateSpecialty(Long id, SpecialtyDto specialtyDto) {
