@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/doctors")
 @RequiredArgsConstructor
@@ -57,7 +59,7 @@ public class DoctorController {
             @RequestParam(required = false) Status status,
             @RequestParam(required = false) Long departmentId
     ) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("name"));
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id")); 
         Page<DoctorResponseDto> doctorDtos = doctorService.getAllDoctors(pageable, keyword, status, departmentId);
         return ApiResponse.<PaginatedResponse<DoctorResponseDto>>builder()
                 .result(new PaginatedResponse<>(doctorDtos))
@@ -87,7 +89,8 @@ public class DoctorController {
     @PutMapping("/{doctorId}")
     @Operation(summary = "Update doctor information by ID", description = "Return the recently updated doctor information")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "0", description = "Recently updated doctor information")
-    public ApiResponse<DoctorResponseDto> updateDoctor(@PathVariable Long doctorId, UpdateDoctorDto request) {
+    public ApiResponse<DoctorResponseDto> updateDoctor(@PathVariable Long doctorId, @RequestBody UpdateDoctorDto request) {
+        log.info("Received request to update doctor information id {}", doctorId);
         return ApiResponse.<DoctorResponseDto>builder()
                 .result(doctorService.updateDoctor(doctorId, request))
                 .build();

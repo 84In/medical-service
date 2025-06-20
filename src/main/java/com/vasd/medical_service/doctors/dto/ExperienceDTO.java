@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ExperienceDTO {
-    private Integer id;
+    private Long id;
     @NotBlank
     @Schema(example = "Bác sĩ điều trị")
     private String position;

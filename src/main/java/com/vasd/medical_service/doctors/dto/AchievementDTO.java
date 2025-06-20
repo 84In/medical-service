@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AchievementDTO {
-    private Integer id;
+    private Long id;
     @NotBlank
     @Schema(example = "Giải thưởng Bác sĩ xuất sắc")
     private String title;

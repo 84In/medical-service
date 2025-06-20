@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class WorkingHourDTO {
-    private Integer id;
+    private Long id;
     @NotNull
     @Schema(description = "Ngày trong tuần")
     private DayOfWeekEnum dayOfWeek;

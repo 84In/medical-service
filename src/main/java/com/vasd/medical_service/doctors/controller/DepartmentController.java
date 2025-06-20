@@ -5,7 +5,6 @@ import com.vasd.medical_service.common.ApiResponse;
 import com.vasd.medical_service.doctors.dto.request.CreateDepartmentDto;
 import com.vasd.medical_service.doctors.dto.request.UpdateDepartmentDto;
 import com.vasd.medical_service.doctors.dto.response.DepartmentResponseDto;
-import com.vasd.medical_service.doctors.dto.response.DoctorResponseDto;
 import com.vasd.medical_service.doctors.service.DepartmentService;
 import com.vasd.medical_service.dto.PaginatedResponse;
 import io.swagger.v3.oas.annotations.Operation;
