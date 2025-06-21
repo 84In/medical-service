@@ -9,7 +9,7 @@ import lombok.*;
 public class WorkingHour {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "day_of_week", nullable = false)

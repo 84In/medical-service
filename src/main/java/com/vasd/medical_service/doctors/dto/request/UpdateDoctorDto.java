@@ -9,11 +9,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.Builder;
 import lombok.Data;
+import lombok.ToString;
 
 import java.util.List;
 
 @Data
 @Builder
+@ToString
 public class UpdateDoctorDto {
 
     @NotNull

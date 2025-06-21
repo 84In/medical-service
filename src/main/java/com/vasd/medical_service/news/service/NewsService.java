@@ -10,6 +10,7 @@ import com.vasd.medical_service.news.entities.News;
 import com.vasd.medical_service.news.entities.NewsType;
 import com.vasd.medical_service.news.repository.NewsRepository;
 import com.vasd.medical_service.news.repository.NewsTypeRepository;
+import com.vasd.medical_service.upload.service.ImageUsageProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ public class NewsService {
 
     private final NewsRepository newsRepository;
     private final NewsTypeRepository newsTypeRepository;
+    private final ImageUsageProcessor imageUsageProcessor;
 
     public List<NewsResponseDto> getAllNews() {
 
@@ -53,6 +55,8 @@ public class NewsService {
         news.setThumbnailUrl(news.getThumbnailUrl());
         news.setStatus(news.getNewsType().getStatus());
         log.info("News created: {}", news);
+        imageUsageProcessor.processImageUrl(news.getThumbnailUrl());
+        imageUsageProcessor.processImagesFromHtml(news.getContentHtml());
         return newsToDto(news);
     }
 
@@ -65,6 +69,7 @@ public class NewsService {
         }
         if(updateNewsDto.getContentHtml()!= null){
             news.setContentHtml(updateNewsDto.getContentHtml());
+            imageUsageProcessor.processImagesFromHtml(updateNewsDto.getContentHtml());
         }
         if(updateNewsDto.getSlug()!= null){
             news.setSlug(updateNewsDto.getSlug());
@@ -78,6 +83,7 @@ public class NewsService {
         }
         if(updateNewsDto.getThumbnailUrl() != null){
             news.setThumbnailUrl(updateNewsDto.getThumbnailUrl());
+            imageUsageProcessor.processImageUrl(news.getThumbnailUrl());
         }
         if(updateNewsDto.getStatus() != null){
             news.setStatus(updateNewsDto.getStatus());

@@ -10,6 +10,8 @@ import com.vasd.medical_service.exception.AppException;
 import com.vasd.medical_service.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,7 +29,7 @@ public class PositionService {
         Position position = new Position();
         position.setName(request.getName());
         position.setDescription(request.getDescription());
-        position.setStatus(Status.ACTIVE);
+        position.setStatus(request.getStatus());
 
         log.info("Creating position {}", position);
 
@@ -42,12 +44,22 @@ public class PositionService {
 
     }
 
+
     public PositionResponseDto getPosition(Long id){
 
         Position position = positionRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.POSITION_NOT_FOUND));
 
         log.info("Getting position {}", position);
         return mapPositionToDto(position);
+    }
+
+    public Page<PositionResponseDto> getAllPositions(Pageable pageable, String keyword, Status status) {
+        Page<Position> positions = positionRepository.searchPositions(
+                keyword != null && !keyword.trim().isEmpty() ? keyword.trim() : null,
+                status,
+                pageable);
+        log.info("Getting all positions");
+        return positions.map(this::mapPositionToDto);
     }
 
     public PositionResponseDto updatePosition(Long id, UpdatePositionDto updatePositionDto) {

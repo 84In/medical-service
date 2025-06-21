@@ -124,9 +124,7 @@ public class AuthenticationService {
                 .subject(user.getUsername())
                 .issuer("medical_service")
                 .issueTime(new Date())
-                .expirationTime(new Date(
-                        Instant.now().plus(VALID_DURATION, ChronoUnit.HOURS).toEpochMilli()
-                ))
+                .expirationTime(Date.from(Instant.now().plusSeconds(VALID_DURATION)))
                 .jwtID(UUID.randomUUID().toString())
                 .claim("scope", builderScope(user))
                 .build();

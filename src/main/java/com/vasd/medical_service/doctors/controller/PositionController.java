@@ -1,15 +1,22 @@
 package com.vasd.medical_service.doctors.controller;
 
+import com.vasd.medical_service.Enum.Status;
 import com.vasd.medical_service.common.ApiResponse;
 import com.vasd.medical_service.doctors.dto.request.CreatePositionDto;
 import com.vasd.medical_service.doctors.dto.request.UpdatePositionDto;
 import com.vasd.medical_service.doctors.dto.response.PositionResponseDto;
 import com.vasd.medical_service.doctors.service.PositionService;
+import com.vasd.medical_service.dto.PaginatedResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,6 +36,31 @@ public class PositionController {
 
         return ApiResponse.<List<PositionResponseDto>>builder()
                 .result(positionService.getAllPositions())
+                .build();
+    }
+    @GetMapping("/search")
+    @Operation(
+            summary = "Search positions with pagination",
+            description = "Returns a paginated list of positions filtered by keyword. Keyword can match name, description and status.",
+            parameters = {
+                    @Parameter(name = "page", description = "Page number (default is 0)", example = "0"),
+                    @Parameter(name = "size", description = "Number of records per page (default is 10)", example = "10"),
+                    @Parameter(name = "keyword", description = "Search keyword (name, description, status)", example = "cardiology")
+            },
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "0", description = "Paginated list of positions returned successfully")
+            }
+    )
+    public ApiResponse<PaginatedResponse<PositionResponseDto>> getpositions(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(required = false) Status status
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("name"));
+        Page<PositionResponseDto> positionDtos = positionService.getAllPositions(pageable, keyword, status);
+        return ApiResponse.<PaginatedResponse<PositionResponseDto>>builder()
+                .result(new PaginatedResponse<>(positionDtos))
                 .build();
     }
 

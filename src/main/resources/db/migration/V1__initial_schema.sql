@@ -18,7 +18,7 @@ CREATE TABLE positions (
 CREATE TABLE departments (
                              id INT PRIMARY KEY AUTO_INCREMENT,
                              name VARCHAR(100) NOT NULL UNIQUE,
-                             contentHtml TEXT,
+                             content_html TEXT,
                              status TINYINT UNSIGNED NOT NULL DEFAULT 1 CHECK (status BETWEEN 0 AND 3)
 );
 
@@ -26,7 +26,7 @@ CREATE TABLE departments (
 CREATE TABLE doctors (
                          id INT PRIMARY KEY AUTO_INCREMENT,
                          name VARCHAR(100) NOT NULL,
-                         avatarUrl VARCHAR(255),
+                         avatar_url VARCHAR(255),
                          introduction TEXT,
                          experience_years INT CHECK (experience_years >= 0),
                          department_id INT,
@@ -50,12 +50,12 @@ CREATE TABLE news (
                       id INT PRIMARY KEY AUTO_INCREMENT,
                       slug VARCHAR(100) NOT NULL UNIQUE,
                       name VARCHAR(100) NOT NULL,
-                      thumbnailUrl VARCHAR(255),
-                      descriptionShort TEXT,
-                      contentHtml TEXT,
+                      thumbnail_url VARCHAR(255),
+                      description_short TEXT,
+                      content_html TEXT,
                       status TINYINT UNSIGNED NOT NULL DEFAULT 1 CHECK (status BETWEEN 0 AND 3),
-                      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                       news_type_id INT,
                       FOREIGN KEY (news_type_id) REFERENCES news_type(id) ON DELETE SET NULL
 );
@@ -73,12 +73,12 @@ CREATE TABLE services (
                           id INT PRIMARY KEY AUTO_INCREMENT,
                           slug VARCHAR(100) NOT NULL UNIQUE,
                           name VARCHAR(100) NOT NULL,
-                          thumbnailUrl VARCHAR(255),
-                          descriptionShort TEXT,
-                          contentHtml TEXT,
+                          thumbnail_url VARCHAR(255),
+                          description_short TEXT,
+                          content_html TEXT,
                           status TINYINT UNSIGNED NOT NULL DEFAULT 1 CHECK (status BETWEEN 0 AND 3),
-                          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                          updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                           serviceType_id INT,
                           FOREIGN KEY (serviceType_id) REFERENCES service_types(id) ON DELETE SET NULL
 );

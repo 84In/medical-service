@@ -1,6 +1,7 @@
 package com.vasd.medical_service.medical_services.service;
 
 import com.vasd.medical_service.Enum.Status;
+import com.vasd.medical_service.common.utils.CloudinaryUtils;
 import com.vasd.medical_service.exception.AppException;
 import com.vasd.medical_service.exception.ErrorCode;
 import com.vasd.medical_service.medical_services.dto.request.CreateServiceDto;
@@ -11,6 +12,8 @@ import com.vasd.medical_service.medical_services.entities.ServiceType;
 import com.vasd.medical_service.medical_services.entities.Services;
 import com.vasd.medical_service.medical_services.repository.ServiceRepository;
 import com.vasd.medical_service.medical_services.repository.ServiceTypeRepository;
+import com.vasd.medical_service.upload.repository.TemporaryImageRepository;
+import com.vasd.medical_service.upload.service.ImageUsageProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +28,7 @@ public class ServiceService {
 
     private final ServiceRepository serviceRepository;
     private final ServiceTypeRepository serviceTypeRepository;
+    private final ImageUsageProcessor imageUsageProcessor;
 
     public List<ServiceResponseDto> findAllServices() {
 
@@ -60,6 +64,12 @@ public class ServiceService {
         service.setThumbnailUrl(createServiceDto.getThumbnailUrl());
         service.setServiceType(serviceType);
         log.info("Create service: {}", service);
+
+        imageUsageProcessor.processImageUrl(createServiceDto.getThumbnailUrl());
+
+        imageUsageProcessor.processImagesFromHtml(createServiceDto.getContentHtml());
+
+
         return mapServiceToDto( serviceRepository.save(service));
     }
 
@@ -76,12 +86,14 @@ public class ServiceService {
         }
         if (updateServiceDto.getContentHtml() != null){
             service.setContentHtml(updateServiceDto.getContentHtml());
+            imageUsageProcessor.processImagesFromHtml(updateServiceDto.getContentHtml());
         }
         if (updateServiceDto.getDescriptionShort() != null){
             service.setDescriptionShort(updateServiceDto.getDescriptionShort());
         }
         if (updateServiceDto.getThumbnailUrl() != null){
             service.setThumbnailUrl(updateServiceDto.getThumbnailUrl());
+            imageUsageProcessor.processImageUrl(updateServiceDto.getThumbnailUrl());
         }
         if (updateServiceDto.getServiceTypeId()!= null){
             ServiceType serviceType = serviceTypeRepository.findById(updateServiceDto.getServiceTypeId()).orElseThrow(()-> new AppException(ErrorCode.SERVICE_TYPE_NOT_FOUND));
