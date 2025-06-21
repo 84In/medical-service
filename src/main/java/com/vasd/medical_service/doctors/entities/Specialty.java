@@ -5,7 +5,11 @@ import lombok.*;
 
 @Entity
 @Table(name = "specialties")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Specialty {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -13,7 +17,7 @@ public class Specialty {
     @Column(nullable = false, unique = true)
     private String name;
 
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Enumerated(EnumType.ORDINAL)

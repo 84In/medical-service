@@ -1,15 +1,19 @@
 package com.vasd.medical_service.doctors.service;
 
 import com.vasd.medical_service.Enum.Status;
+import com.vasd.medical_service.doctors.dto.SpecialtyDto;
 import com.vasd.medical_service.doctors.dto.request.CreateTitleDto;
 import com.vasd.medical_service.doctors.dto.request.UpdateTitleDto;
 import com.vasd.medical_service.doctors.dto.response.TitleResponseDto;
+import com.vasd.medical_service.doctors.entities.Specialty;
 import com.vasd.medical_service.doctors.entities.Title;
 import com.vasd.medical_service.doctors.repository.TitleRepository;
 import com.vasd.medical_service.exception.AppException;
 import com.vasd.medical_service.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,7 +31,7 @@ public class TitleService {
         Title title = new Title();
         title.setName(creatTitleDto.getName());
         title.setDescription(creatTitleDto.getDescription());
-        title.setStatus(Status.ACTIVE);
+        title.setStatus(creatTitleDto.getStatus());
         log.info("Creating title {}", title);
         return mapTitleToTitleDto(titleRepository.save(title));
     }
@@ -44,6 +48,15 @@ public class TitleService {
         Title title = titleRepository.findById(id).orElseThrow(()-> new AppException(ErrorCode.TITLE_NOT_FOUND));
         log.info("Getting title {}", title);
         return mapTitleToTitleDto(title);
+    }
+    public Page<TitleResponseDto> getAllTitles(Pageable pageable, String keyword, Status status) {
+        Page<Title> titles = titleRepository.searchTitle(
+                keyword != null && !keyword.trim().isEmpty() ? keyword.trim() : null,
+                status,
+                pageable
+        );
+        log.info("Get all specialties!");
+        return titles.map(this::mapTitleToTitleDto);
     }
 
     public TitleResponseDto updateTitle(Long id,UpdateTitleDto updateTitleDto) {

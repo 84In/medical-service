@@ -1,5 +1,6 @@
 package com.vasd.medical_service.doctors.service;
 
+import com.vasd.medical_service.Enum.Status;
 import com.vasd.medical_service.doctors.dto.*;
 import com.vasd.medical_service.doctors.dto.request.CreateDoctorDto;
 import com.vasd.medical_service.doctors.dto.request.UpdateDoctorDto;
@@ -11,9 +12,13 @@ import com.vasd.medical_service.doctors.entities.*;
 import com.vasd.medical_service.doctors.repository.*;
 import com.vasd.medical_service.exception.AppException;
 import com.vasd.medical_service.exception.ErrorCode;
+import com.vasd.medical_service.upload.service.ImageUsageProcessor;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalTime;
@@ -35,141 +40,233 @@ public class DoctorService {
     private final WorkingHourRepository workingHourRepository;
     private final AchievementRepository achievementRepository;
     private final EducationRepository educationRepository;
+    private final ImageUsageProcessor imageUsageProcessor;
 
     @Transactional
-    public DoctorResponseDto createDoctor(CreateDoctorDto dto){
-        Doctor doctor = new Doctor();
-        doctor.setName(dto.getName());
-        doctor.setAvatarUrl(dto.getAvatarUrl());
-        doctor.setIntroduction(dto.getIntroduction());
-        doctor.setExperienceYears(dto.getExperienceYears());
-        doctor.setEmail(dto.getEmail());
-        doctor.setPhone(dto.getPhone());
-        doctor.setStatus(dto.getStatus());
+    public DoctorResponseDto createDoctor(CreateDoctorDto dto) {
+        try {
+            Doctor doctor = new Doctor();
+            doctor.setName(dto.getName());
+            doctor.setAvatarUrl(dto.getAvatarUrl());
+            doctor.setIntroduction(dto.getIntroduction());
+            doctor.setExperienceYears(dto.getExperienceYears());
+            doctor.setEmail(dto.getEmail());
+            doctor.setPhone(dto.getPhone());
+            doctor.setStatus(dto.getStatus());
 
-        if (dto.getSpecialtyIds() != null && !dto.getSpecialtyIds().isEmpty()) {
-            List<Specialty> specialties = specialtyRepository.findAllById(dto.getSpecialtyIds());
-            if (specialties.size() != dto.getSpecialtyIds().size()) {
-                throw new AppException(ErrorCode.SPECIALTY_NOT_FOUND); // Hoặc tự kiểm tra id nào bị thiếu
+            if (dto.getSpecialtyIds() != null && !dto.getSpecialtyIds().isEmpty()) {
+                List<Specialty> specialties = specialtyRepository.findAllById(dto.getSpecialtyIds());
+                if (specialties.size() != dto.getSpecialtyIds().size()) {
+                    throw new AppException(ErrorCode.SPECIALTY_NOT_FOUND); // Hoặc tự kiểm tra id nào bị thiếu
+                }
+                doctor.setSpecialties(new HashSet<>(specialties));
             }
-            doctor.setSpecialties(specialties);
+
+            doctor.setDepartment(
+                    departmentRepository.findById(dto.getDepartmentId())
+                            .orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_FOUND))
+            );
+            doctor.setPosition(
+                    positionRepository.findById(dto.getPositionId())
+                            .orElseThrow(() -> new AppException(ErrorCode.POSITION_NOT_FOUND))
+            );
+            doctor.setTitle(
+                    titleRepository.findById(dto.getTitleId())
+                            .orElseThrow(() -> new AppException(ErrorCode.TITLE_NOT_FOUND))
+            );
+
+            Doctor rsdoctor = doctorRepository.save(doctor);
+            log.info("save doctor {}", rsdoctor);
+
+            if (dto.getWorkingHours() != null) {
+
+                List<WorkingHour> workingHours = dto.getWorkingHours().stream().map(whDto -> {
+                    WorkingHour wh = new WorkingHour();
+                    wh.setDoctor(rsdoctor);
+                    wh.setDayOfWeek(whDto.getDayOfWeek());
+                    wh.setStartTime(whDto.getStartTime());
+                    wh.setEndTime(whDto.getEndTime());
+                    wh.setIsAvailable(whDto.getIsAvailable());
+                    return wh;
+                }).toList();
+                workingHourRepository.saveAll(workingHours);
+                rsdoctor.setWorkingHours(new HashSet<>(workingHours));
+                log.info("save workingHours");
+            }
+
+            if (dto.getEducation() != null) {
+                List<Education> educations = dto.getEducation().stream().map(edDto -> {
+                    Education ed = new Education();
+                    ed.setDoctor(rsdoctor);
+                    ed.setDegree(edDto.getDegree());
+                    ed.setInstitution(edDto.getInstitution());
+                    ed.setYear(edDto.getYear());
+                    ed.setDescription(edDto.getDescription());
+                    return ed;
+                }).collect(Collectors.toList());
+                educationRepository.saveAll(educations);
+                rsdoctor.setEducation(new HashSet<>(educations));
+                log.info("save education");
+            }
+
+            if (dto.getWorkExperience() != null) {
+                List<Experience> experiences = dto.getWorkExperience().stream().map(exDto -> {
+                    Experience ex = new Experience();
+                    ex.setDoctor(rsdoctor);
+                    ex.setPosition(exDto.getPosition());
+                    ex.setOrganization(exDto.getOrganization());
+                    ex.setStartYear(exDto.getStartYear());
+                    ex.setEndYear(exDto.getEndYear());
+                    ex.setDescription(exDto.getDescription());
+                    return ex;
+                }).collect(Collectors.toList());
+                experienceRepository.saveAll(experiences);
+                rsdoctor.setWorkExperience(new HashSet<>(experiences));
+                log.info("save workExperience");
+            }
+
+            if (dto.getAchievements() != null) {
+                List<Achievement> achievements = dto.getAchievements().stream().map(acDto -> {
+                    Achievement ac = new Achievement();
+                    ac.setDoctor(rsdoctor);
+                    ac.setTitle(acDto.getTitle());
+                    ac.setYear(acDto.getYear());
+                    ac.setDescription(acDto.getDescription());
+                    ac.setType(acDto.getType());
+                    return ac;
+                }).collect(Collectors.toList());
+                achievementRepository.saveAll(achievements);
+                rsdoctor.setAchievements(new HashSet<>(achievements));
+                log.info("save achievements");
+            }
+
+            imageUsageProcessor.processImageUrl(dto.getAvatarUrl());
+            log.info("process image");
+
+            return mapDoctor(rsdoctor);
+        } catch (Exception e) {
+            log.error("❌ Lỗi khi tạo doctor, transaction sẽ rollback", e);
+            throw e; // hoặc AppException
         }
-
-        doctor.setDepartment(
-                departmentRepository.findById(dto.getDepartmentId())
-                        .orElseThrow(()->new AppException(ErrorCode.DEPARTMENT_NOT_FOUND))
-        );
-        doctor.setPosition(
-                positionRepository.findById(dto.getPositionId())
-                        .orElseThrow(()-> new AppException(ErrorCode.POSITION_NOT_FOUND))
-        );
-        doctor.setTitle(
-                titleRepository.findById(dto.getTitleId())
-                        .orElseThrow(()-> new AppException(ErrorCode.TITLE_NOT_FOUND))
-        );
-
-        Doctor rsdoctor = doctorRepository.save(doctor);
-
-        if(dto.getWorkingHours() != null){
-
-            List<WorkingHour> workingHours = dto.getWorkingHours().stream().map(whDto->{
-                WorkingHour wh = new WorkingHour();
-                wh.setDoctor(rsdoctor);
-                wh.setDayOfWeek(whDto.getDayOfWeek());
-                wh.setStartTime(whDto.getStartTime());
-                wh.setEndTime(whDto.getEndTime());
-                wh.setIsAvailable(whDto.getIsAvailable());
-                return wh;
-            }).toList();
-            workingHourRepository.saveAll(workingHours);
-            rsdoctor.setWorkingHours(workingHours);
-        }
-
-        if (dto.getEducation() != null) {
-            List<Education> educations = dto.getEducation().stream().map(edDto -> {
-                Education ed = new Education();
-                ed.setDoctor(rsdoctor);
-                ed.setDegree(edDto.getDegree());
-                ed.setInstitution(edDto.getInstitution());
-                ed.setYear(edDto.getYear());
-                ed.setDescription(edDto.getDescription());
-                return ed;
-            }).collect(Collectors.toList());
-            educationRepository.saveAll(educations);
-            rsdoctor.setEducation(educations);
-        }
-
-        if (dto.getWorkExperience() != null) {
-            List<Experience> experiences = dto.getWorkExperience().stream().map(exDto -> {
-                Experience ex = new Experience();
-                ex.setDoctor(rsdoctor);
-                ex.setPosition(exDto.getPosition());
-                ex.setOrganization(exDto.getOrganization());
-                ex.setStartYear(exDto.getStartYear());
-                ex.setEndYear(exDto.getEndYear());
-                ex.setDescription(exDto.getDescription());
-                return ex;
-            }).collect(Collectors.toList());
-            experienceRepository.saveAll(experiences);
-            rsdoctor.setWorkExperience(experiences);
-        }
-
-        if (dto.getAchievements() != null) {
-            List<Achievement> achievements = dto.getAchievements().stream().map(acDto -> {
-                Achievement ac = new Achievement();
-                ac.setDoctor(rsdoctor);
-                ac.setTitle(acDto.getTitle());
-                ac.setYear(acDto.getYear());
-                ac.setDescription(acDto.getDescription());
-                ac.setType(acDto.getType());
-                return ac;
-            }).collect(Collectors.toList());
-            achievementRepository.saveAll(achievements);
-            rsdoctor.setAchievements(achievements);
-        }
-
-
-        return mapDoctor(rsdoctor);
     }
 
     @Transactional
     public DoctorResponseDto updateDoctor(Long doctorId, UpdateDoctorDto dto) {
 
+        log.info("Doctor update {}", dto);
+
+        try {
         Doctor doctor = doctorRepository.findById(doctorId)
-                .orElseThrow(()-> new AppException(ErrorCode.DOCTOR_NOT_FOUND));
+                .orElseThrow(() -> new AppException(ErrorCode.DOCTOR_NOT_FOUND));
+        log.info("update doctor {}", doctor.getId());
 
         doctor.setName(dto.getName());
         doctor.setAvatarUrl(dto.getAvatarUrl());
         doctor.setIntroduction(dto.getIntroduction());
         doctor.setExperienceYears(dto.getExperienceYears());
 
-        Department department = departmentRepository.findById(dto.getDepartmentId()).orElseThrow(()-> new AppException(ErrorCode.DEPARTMENT_NOT_FOUND));
-        Position position = positionRepository.findById(dto.getPositionId()).orElseThrow(()->new AppException(ErrorCode.POSITION_NOT_FOUND));
-        Title title = titleRepository.findById(dto.getTitleId()).orElseThrow(()->new AppException(ErrorCode.TITLE_NOT_FOUND));
+        if(
+                dto.getDepartmentId() != null
+        ){
+            Department department = departmentRepository.findById(dto.getDepartmentId()).orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_FOUND));
+            doctor.setDepartment(department);
+        }
+        if(
+                dto.getPositionId() != null
+        ){
+            Position position = positionRepository.findById(dto.getPositionId()).orElseThrow(() -> new AppException(ErrorCode.POSITION_NOT_FOUND));
+            doctor.setPosition(position);
+        }
+        if(
+                dto.getTitleId() != null
+        ){
+            Title title = titleRepository.findById(dto.getTitleId()).orElseThrow(() -> new AppException(ErrorCode.TITLE_NOT_FOUND));
+            doctor.setTitle(title);
+        }
 
-        doctor.setDepartment(department);
-        doctor.setPosition(position);
-        doctor.setTitle(title);
+        doctor.setStatus(dto.getStatus());
 
         doctor.setPhone(dto.getPhone());
         doctor.setEmail(dto.getEmail());
 
-        updateSpecialties(doctor, dto.getSpecialtyIds());
-        updateWorkingHours(doctor, dto.getWorkingHours());
-        updateEducation(doctor, dto.getEducation());
-        updateExperience(doctor, dto.getWorkExperience());
-        updateAchievements(doctor, dto.getAchievements());
+       if(dto.getSpecialtyIds() != null) {
+           updateSpecialties(doctor, dto.getSpecialtyIds());
+       }
+
+        if(dto.getWorkExperience() != null) {
+            updateWorkingHours(doctor, dto.getWorkingHours());
+        }
+        if(dto.getEducation() != null) {
+            updateEducation(doctor, dto.getEducation());
+        }
+        if(dto.getWorkExperience() != null) {
+            updateExperience(doctor, dto.getWorkExperience());
+        }
+        if(dto.getAchievements() != null) {
+            updateAchievements(doctor, dto.getAchievements());
+        }
+
+        imageUsageProcessor.processImageUrl(dto.getAvatarUrl());
 
         return mapDoctor(doctorRepository.save(doctor));
+        } catch (Exception e) {
+            log.error("❌ Lỗi khi cập nhật doctor, transaction sẽ rollback", e);
+            throw e; // hoặc AppException
+        }
     }
 
     public List<DoctorResponseDto> getAllDoctors() {
         List<Doctor> doctors = doctorRepository.findAll();
+        log.info("Get all doctors");
         return doctors.stream().map(this::mapDoctor).collect(Collectors.toList());
     }
 
+    public Page<DoctorResponseDto> getAllDoctors(Pageable pageable, String keyword, Status status, Long departmentId) {
+//        Cách 1: ngốn tài nguyen vi fetch join nhieu
+//        Page<Doctor> doctorPage = doctorRepository.searchDoctors(
+//                keyword != null && !keyword.trim().isEmpty() ? keyword.trim() : null,
+//                status,
+//                departmentId,
+//                pageable
+//        );
+//
+//        log.info("Get all doctors search by: {}, {} and {} ", keyword, status, departmentId);
+//
+//        return doctorPage.map(this::mapDoctor);
+
+//        Cách 2: Lúc fetch đầu lấy đầy đủ thông tin doctors (vẫn cần fetch lấy detail) tạm chấp nhận
+//        Page<Doctor> simplePage = doctorRepository.searchDoctorsSimple(
+//                keyword != null && !keyword.trim().isEmpty() ? keyword.trim() : null,
+//                status,
+//                departmentId,
+//                pageable
+//        );
+//
+//        List<DoctorResponseDto> detailedList = simplePage.stream()
+//                .map(d -> doctorRepository.findByIdWithDetails(d.getId())
+//                        .map(this::mapDoctor)
+//                        .orElseGet(() -> this.mapDoctor(d)))
+//                .toList();
+//
+//        return new PageImpl<>(detailedList, pageable, simplePage.getTotalElements());
+//        Cách 3: sử dụng fetch ids phân trang (nhanh không tốn quá nhiều thời gian) sau đó lấy details tất cả các ids
+        Page<Long> idPage = doctorRepository.searchDoctorIds(keyword, status, departmentId, pageable);
+        List<Long> ids = idPage.getContent();
+
+        List<Doctor> doctors = doctorRepository.findAllByIdsWithDetails(ids);
+        Map<Long, Doctor> doctorMap = doctors.stream()
+                .collect(Collectors.toMap(Doctor::getId, d -> d));
+
+        List<DoctorResponseDto> dtos = ids.stream()
+                .map(id -> mapDoctor(doctorMap.get(id)))
+                .toList();
+
+        return new PageImpl<>(dtos, pageable, idPage.getTotalElements());
+    }
+
+
     public DoctorResponseDto getDoctor(Long doctorId) {
-        Doctor doctor = doctorRepository.findById(doctorId).orElseThrow(()-> new AppException(ErrorCode.DOCTOR_NOT_FOUND));
+        Doctor doctor = doctorRepository.findByIdWithDetail(doctorId).orElseThrow(() -> new AppException(ErrorCode.DOCTOR_NOT_FOUND));
         return mapDoctor(doctor);
     }
 
@@ -178,21 +275,21 @@ public class DoctorService {
     }
 
     private void updateSpecialties(Doctor doctor, List<Long> specialtyIds) {
-        if (specialtyIds == null) {
-            doctor.setSpecialties(Collections.emptyList());
-            return;
-        }
-        // Giả sử có specialtyRepository để lấy entity
+        log.info("Updating specialties for doctor {}: {}", doctor.getId(), specialtyIds);
         List<Specialty> specialties = new ArrayList<>(specialtyRepository.findAllById(specialtyIds));
-        doctor.setSpecialties(specialties);
+        doctor.setSpecialties(new HashSet<>(specialties));
     }
+
     private void updateWorkingHours(Doctor doctor, List<WorkingHourDTO> dtos) {
         if (dtos == null) {
+            log.info("No working hours provided, deleting all for doctor {}", doctor.getId());
             workingHourRepository.deleteByDoctorId(doctor.getId());
             return;
         }
-        List<WorkingHour> currentList = workingHourRepository.findByDoctorId((doctor.getId()));
-        Map<Integer, WorkingHour> mapCurrent = currentList.stream()
+
+        log.info("Updating working hours for doctor {}: {}", doctor.getId(), dtos);
+        List<WorkingHour> currentList = workingHourRepository.findByDoctorId(doctor.getId());
+        Map<Long, WorkingHour> mapCurrent = currentList.stream()
                 .filter(wh -> wh.getId() != null)
                 .collect(Collectors.toMap(WorkingHour::getId, Function.identity()));
 
@@ -216,18 +313,26 @@ public class DoctorService {
             }
             updatedList.add(entity);
         }
-        // Xóa workingHours cũ không còn trong request
-        workingHourRepository.deleteAll(mapCurrent.values());
+
+        List<WorkingHour> toDelete = mapCurrent.values().stream()
+                .filter(wh -> wh.getId() != null)
+                .toList();
+
+        log.info("Deleting old working hours: {}", toDelete.stream().map(WorkingHour::getId).toList());
+        workingHourRepository.deleteAll(toDelete);
         workingHourRepository.saveAll(updatedList);
     }
 
     private void updateEducation(Doctor doctor, List<EducationDTO> dtos) {
         if (dtos == null) {
+            log.info("No education info provided, deleting all for doctor {}", doctor.getId());
             educationRepository.deleteByDoctorId(doctor.getId());
             return;
         }
+
+        log.info("Updating education for doctor {}: {}", doctor.getId(), dtos);
         List<Education> currentList = educationRepository.findByDoctorId(doctor.getId());
-        Map<Integer, Education> mapCurrent = currentList.stream()
+        Map<Long, Education> mapCurrent = currentList.stream()
                 .filter(e -> e.getId() != null)
                 .collect(Collectors.toMap(Education::getId, Function.identity()));
 
@@ -251,9 +356,125 @@ public class DoctorService {
             }
             updatedList.add(entity);
         }
-        educationRepository.deleteAll(mapCurrent.values());
+
+        List<Education> toDelete = mapCurrent.values().stream()
+                .filter(e -> e.getId() != null)
+                .toList();
+
+        log.info("Deleting old education entries: {}", toDelete.stream().map(Education::getId).toList());
+        educationRepository.deleteAll(toDelete);
         educationRepository.saveAll(updatedList);
     }
+
+    // Dùng chung cho mọi entity con như Education, Experience, Achievement...
+//    private <ID, DTO, ENTITY> void syncChildEntities(
+//            List<DTO> dtos,
+//            Function<DTO, ID> getDtoIdFn,
+//            Map<ID, ENTITY> currentEntityMap,
+//            Function<DTO, ENTITY> mapDtoToEntity,
+//            Consumer<Collection<ENTITY>> deleteFn,
+//            Consumer<Collection<ENTITY>> saveFn
+//    ) {
+//        if (dtos == null || dtos.isEmpty()) {
+//            deleteFn.accept(currentEntityMap.values());
+//            return;
+//        }
+//
+//        List<ENTITY> updatedList = new ArrayList<>();
+//
+//        for (DTO dto : dtos) {
+//            ID id = getDtoIdFn.apply(dto);
+//            ENTITY entity = (id != null && currentEntityMap.containsKey(id))
+//                    ? currentEntityMap.remove(id)
+//                    : mapDtoToEntity.apply(dto);
+//
+//            updatedList.add(entity);
+//        }
+//
+//        deleteFn.accept(currentEntityMap.values());
+//        saveFn.accept(updatedList);
+//    }
+//    // ---------------------------
+//// Sử dụng cho Education:
+//    private void updateEducation(Doctor doctor, List<EducationDTO> dtos) {
+//        List<Education> currentList = educationRepository.findByDoctorId(doctor.getId());
+//        Map<Long, Education> currentMap = currentList.stream()
+//                .filter(e -> e.getId() != null)
+//                .collect(Collectors.toMap(Education::getId, Function.identity()));
+//
+//        syncChildEntities(
+//                dtos,
+//                EducationDTO::getId,
+//                currentMap,
+//                dto -> {
+//                    Education e = new Education();
+//                    e.setDoctor(doctor);
+//                    e.setDegree(dto.getDegree());
+//                    e.setInstitution(dto.getInstitution());
+//                    e.setYear(dto.getYear());
+//                    e.setDescription(dto.getDescription());
+//                    return e;
+//                },
+//                educationRepository::deleteAll,
+//                educationRepository::saveAll
+//        );
+//    }
+//
+//    // ---------------------------
+//// Sử dụng cho Experience:
+//    private void updateExperience(Doctor doctor, List<ExperienceDTO> dtos) {
+//        List<Experience> currentList = experienceRepository.findByDoctorId(doctor.getId());
+//        Map<Long, Experience> currentMap = currentList.stream()
+//                .filter(e -> e.getId() != null)
+//                .collect(Collectors.toMap(Experience::getId, Function.identity()));
+//
+//        syncChildEntities(
+//                dtos,
+//                ExperienceDTO::getId,
+//                currentMap,
+//                dto -> {
+//                    Experience e = new Experience();
+//                    e.setDoctor(doctor);
+//                    e.setPosition(dto.getPosition());
+//                    e.setOrganization(dto.getOrganization());
+//                    e.setStartYear(dto.getStartYear());
+//                    e.setEndYear(dto.getEndYear());
+//                    e.setDescription(dto.getDescription());
+//                    return e;
+//                },
+//                experienceRepository::deleteAll,
+//                experienceRepository::saveAll
+//        );
+//    }
+//
+//    // ---------------------------
+//// Sử dụng cho Achievement:
+//    private void updateAchievements(Doctor doctor, List<AchievementDTO> dtos) {
+//        List<Achievement> currentList = achievementRepository.findByDoctorId(doctor.getId());
+//        Map<Long, Achievement> currentMap = currentList.stream()
+//                .filter(a -> a.getId() != null)
+//                .collect(Collectors.toMap(Achievement::getId, Function.identity()));
+//
+//        syncChildEntities(
+//                dtos,
+//                AchievementDTO::getId,
+//                currentMap,
+//                dto -> {
+//                    Achievement a = new Achievement();
+//                    a.setDoctor(doctor);
+//                    a.setTitle(dto.getTitle());
+//                    a.setYear(dto.getYear());
+//                    a.setDescription(dto.getDescription());
+//                    a.setType(dto.getType());
+//                    return a;
+//                },
+//                achievementRepository::deleteAll,
+//                achievementRepository::saveAll
+//        );
+//    }
+
+
+
 
     private void updateExperience(Doctor doctor, List<ExperienceDTO> dtos) {
         if (dtos == null) {
@@ -261,7 +482,7 @@ public class DoctorService {
             return;
         }
         List<Experience> currentList = experienceRepository.findByDoctorId(doctor.getId());
-        Map<Integer, Experience> mapCurrent = currentList.stream()
+        Map<Long, Experience> mapCurrent = currentList.stream()
                 .filter(e -> e.getId() != null)
                 .collect(Collectors.toMap(Experience::getId, Function.identity()));
 
@@ -297,7 +518,7 @@ public class DoctorService {
             return;
         }
         List<Achievement> currentList = achievementRepository.findByDoctorId(doctor.getId());
-        Map<Integer, Achievement> mapCurrent = currentList.stream()
+        Map<Long, Achievement> mapCurrent = currentList.stream()
                 .filter(a -> a.getId() != null)
                 .collect(Collectors.toMap(Achievement::getId, Function.identity()));
 
@@ -326,13 +547,16 @@ public class DoctorService {
     }
 
 
-    private DoctorResponseDto mapDoctor(Doctor doctor){
+    private DoctorResponseDto mapDoctor(Doctor doctor) {
         return DoctorResponseDto.builder()
                 .id(doctor.getId())
                 .name(doctor.getName())
                 .avatarUrl(doctor.getAvatarUrl())
                 .introduction(doctor.getIntroduction())
                 .experienceYears(doctor.getExperienceYears())
+                .phone(doctor.getPhone())
+                .email(doctor.getEmail())
+                .status(doctor.getStatus())
                 .department(DepartmentResponseDto.builder()
                         .id(doctor.getDepartment().getId())
                         .name(doctor.getDepartment().getName())
@@ -352,24 +576,21 @@ public class DoctorService {
                         .status(doctor.getTitle().getStatus())
                         .build())
                 .specialties(
-                        doctor.getSpecialties().stream().map(
-                                specialty -> {
-                                    SpecialtyDto sDto = new SpecialtyDto();
-                                    sDto.setId(specialty.getId());
-                                    sDto.setName(specialty.getName());
-                                    sDto.setDescription(specialty.getDescription());
-                                    sDto.setStatus(specialty.getStatus());
-                                    return sDto;
-                                }
-                        ).collect(Collectors.toList())
+                        doctor.getSpecialties().stream().map(s -> new SpecialtyDto(
+                                s.getId(),
+                                s.getName(),
+                                s.getDescription(),
+                                s.getStatus()
+                        )).collect(Collectors.toList())
                 )
-                .achievements(mapAchievement(doctor.getAchievements()))
-                .education(mapEducation(doctor.getEducation()))
-                .workExperience(mapExperience(doctor.getWorkExperience()))
-                .workingHours(mapWorkingHour(doctor.getWorkingHours()))
+                .achievements(mapAchievement(new ArrayList<>(doctor.getAchievements())))
+                .education(mapEducation(new ArrayList<>(doctor.getEducation())))
+                .workExperience(mapExperience(new ArrayList<>(doctor.getWorkExperience())))
+                .workingHours(mapWorkingHour(new ArrayList<>(doctor.getWorkingHours())))
                 .build();
     }
-    private List<AchievementDTO> mapAchievement(List<Achievement> achievements){
+
+    private List<AchievementDTO> mapAchievement(List<Achievement> achievements) {
         achievements.sort(Comparator.comparing(Achievement::getYear));
         return achievements.stream().map(achievement -> {
 
@@ -382,9 +603,11 @@ public class DoctorService {
             return aDto;
         }).collect(Collectors.toList());
     }
-    private List<EducationDTO> mapEducation(List<Education> educations){
-        educations.sort(Comparator.comparing(Education::getYear));
-        return educations.stream().map(education -> {
+
+    private List<EducationDTO> mapEducation(List<Education> educations) {
+        List<Education> sortedList = new ArrayList<>(educations);
+        sortedList.sort(Comparator.comparing(Education::getYear));
+        return sortedList.stream().map(education -> {
             EducationDTO eDto = new EducationDTO();
             eDto.setId(education.getId());
             eDto.setDescription(education.getDescription());
@@ -394,9 +617,12 @@ public class DoctorService {
             return eDto;
         }).collect(Collectors.toList());
     }
-    private List<ExperienceDTO> mapExperience(List<Experience> experiences){
-        experiences.sort(Comparator.comparing(Experience::getStartYear));
-        return experiences.stream().map(experience -> {
+
+
+    private List<ExperienceDTO> mapExperience(List<Experience> experiences) {
+        List<Experience> sortedList = new ArrayList<>(experiences);
+        sortedList.sort(Comparator.comparing(Experience::getStartYear));
+        return sortedList.stream().map(experience -> {
             ExperienceDTO eDto = new ExperienceDTO();
             eDto.setId(experience.getId());
             eDto.setStartYear(experience.getStartYear());
@@ -407,10 +633,13 @@ public class DoctorService {
             return eDto;
         }).collect(Collectors.toList());
     }
-    private List<WorkingHourDTO> mapWorkingHour(List<WorkingHour> workingHours){
-        workingHours.sort(Comparator.comparing((WorkingHour wh) -> wh.getDayOfWeek().ordinal())
-                .thenComparing(w-> LocalTime.parse(w.getStartTime())));
-        return workingHours.stream().map(workingHour -> {
+
+
+    private List<WorkingHourDTO> mapWorkingHour(List<WorkingHour> workingHours) {
+        List<WorkingHour> sortedList = new ArrayList<>(workingHours);
+        sortedList.sort(Comparator.comparing((WorkingHour wh) -> wh.getDayOfWeek().ordinal())
+                .thenComparing(w -> LocalTime.parse(w.getStartTime())));
+        return sortedList.stream().map(workingHour -> {
             WorkingHourDTO whDto = new WorkingHourDTO();
             whDto.setId(workingHour.getId());
             whDto.setDayOfWeek(workingHour.getDayOfWeek());
@@ -420,5 +649,6 @@ public class DoctorService {
             return whDto;
         }).collect(Collectors.toList());
     }
+
 
 }

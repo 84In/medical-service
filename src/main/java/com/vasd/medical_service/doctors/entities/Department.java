@@ -21,8 +21,7 @@ public class Department {
 
     private String name;
 
-    @Column(name = "contentHtml", columnDefinition = "TEXT")
-    @Lob
+    @Column(name = "content_html", columnDefinition = "LONGTEXT")
     private String contentHtml;
 
     @Enumerated(EnumType.ORDINAL)

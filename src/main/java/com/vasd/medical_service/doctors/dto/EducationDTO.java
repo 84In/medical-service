@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EducationDTO {
-    private Integer id; // null nếu tạo mới
+    private Long id; // null nếu tạo mới
     @NotBlank
     @Schema(example = "Thạc sĩ Y học")
     private String degree;
