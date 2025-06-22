@@ -1,7 +1,6 @@
 package com.vasd.medical_service.medical_services.service;
 
 import com.vasd.medical_service.Enum.Status;
-import com.vasd.medical_service.common.utils.CloudinaryUtils;
 import com.vasd.medical_service.exception.AppException;
 import com.vasd.medical_service.exception.ErrorCode;
 import com.vasd.medical_service.medical_services.dto.request.CreateServiceDto;
@@ -12,12 +11,15 @@ import com.vasd.medical_service.medical_services.entities.ServiceType;
 import com.vasd.medical_service.medical_services.entities.Services;
 import com.vasd.medical_service.medical_services.repository.ServiceRepository;
 import com.vasd.medical_service.medical_services.repository.ServiceTypeRepository;
-import com.vasd.medical_service.upload.repository.TemporaryImageRepository;
 import com.vasd.medical_service.upload.service.ImageUsageProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,7 +32,7 @@ public class ServiceService {
     private final ServiceTypeRepository serviceTypeRepository;
     private final ImageUsageProcessor imageUsageProcessor;
 
-    public List<ServiceResponseDto> findAllServices() {
+    public List<ServiceResponseDto> getAllServices() {
 
         List<Services> services = serviceRepository.findAll();
 
@@ -39,8 +41,18 @@ public class ServiceService {
 
     public ServiceResponseDto getServiceById(Long id) {
 
-        Services service = serviceRepository.findById(id).orElseThrow(()-> new AppException(ErrorCode.SERVICE_NOT_FOUND));
+        Services service = serviceRepository.findByIdAndStatusNotIn(id,Collections.singleton(Status.DELETED)).orElseThrow(()-> new AppException(ErrorCode.SERVICE_NOT_FOUND));
         return mapServiceToDto(service);
+    }
+
+    public Page<ServiceResponseDto> getAllServices(Pageable pageable, String keyword, Status status, Long serviceTypeId) {
+        Page<Services> servicesPage = serviceRepository.searchServices(
+                keyword != null && !keyword.trim().isEmpty() ? keyword.trim() : null,
+                status,
+                serviceTypeId,
+                pageable
+        );
+        return servicesPage.map(this::mapServiceToDto);
     }
 
     public ServiceResponseDto getServiceBySlug(String slug) {
@@ -79,7 +91,7 @@ public class ServiceService {
             service.setName(updateServiceDto.getName());
         }
         if (updateServiceDto.getSlug() != null){
-            if(serviceRepository.existsServicesBySlug(updateServiceDto.getSlug())){
+            if(!service.getSlug().equals(updateServiceDto.getSlug()) && serviceRepository.existsServicesBySlug(updateServiceDto.getSlug())){
                 throw new AppException(ErrorCode.SLUG_EXISTS);
             }
             service.setSlug(updateServiceDto.getSlug());

@@ -1,13 +1,23 @@
 package com.vasd.medical_service.medical_services.controller;
 
+import com.vasd.medical_service.Enum.Status;
 import com.vasd.medical_service.common.ApiResponse;
+import com.vasd.medical_service.doctors.dto.response.DepartmentResponseDto;
+import com.vasd.medical_service.dto.PaginatedResponse;
 import com.vasd.medical_service.medical_services.dto.request.CreateServiceTypeDto;
 import com.vasd.medical_service.medical_services.dto.request.UpdateServiceTypeDto;
 import com.vasd.medical_service.medical_services.dto.response.ServiceTypeResponseDto;
 import com.vasd.medical_service.medical_services.service.ServiceTypeService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,6 +48,41 @@ public class ServiceTypeController {
                 .result(serviceTypeService.getServiceTypeById(serviceTypeId))
                 .build();
     }
+
+    @GetMapping("/search")
+    @Operation(
+            summary = "Search service types",
+            description = "Returns a paginated list of service types, supporting optional keyword search by name and filtering by status (ACTIVE or INACTIVE).",
+            parameters = {
+                    @Parameter(name = "page", description = "Current page number (starting from 0)", example = "0"),
+                    @Parameter(name = "size", description = "Number of items per page", example = "10"),
+                    @Parameter(name = "keyword", description = "Keyword to search by service type name", example = "internal medicine"),
+                    @Parameter(name = "status", description = "Filter by service type status (ACTIVE or INACTIVE)", example = "ACTIVE")
+            },
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "Paginated list of service types",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = PaginatedResponse.class)
+                            )
+                    )
+            }
+    )
+    public ApiResponse<PaginatedResponse<ServiceTypeResponseDto>> searchServiceTypes(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(required = false) Status status
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("name"));
+        Page<ServiceTypeResponseDto> dtos = serviceTypeService.getAllServiceTypes(keyword, status, pageable);
+        return ApiResponse.<PaginatedResponse<ServiceTypeResponseDto>>builder()
+                .result(new PaginatedResponse<>(dtos))
+                .build();
+    }
+
 
     @PostMapping
     @Operation(summary = "Create new service type information", description = "Return the newly created service type information")
