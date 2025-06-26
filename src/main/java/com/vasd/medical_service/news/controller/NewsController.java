@@ -1,13 +1,23 @@
 package com.vasd.medical_service.news.controller;
 
+import com.vasd.medical_service.Enum.Status;
 import com.vasd.medical_service.common.ApiResponse;
+import com.vasd.medical_service.dto.PaginatedResponse;
+import com.vasd.medical_service.medical_services.dto.response.ServiceResponseDto;
 import com.vasd.medical_service.news.dto.request.CreateNewsDto;
 import com.vasd.medical_service.news.dto.request.UpdateNewsDto;
 import com.vasd.medical_service.news.dto.response.NewsResponseDto;
 import com.vasd.medical_service.news.service.NewsService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,6 +47,50 @@ public class NewsController {
                 .result(newsService.getNewsById(newsId))
                 .build();
     }
+    @GetMapping("slug/{slug}")
+    @Operation(summary = "Get news information by ID", description = "Return news information by ID")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "0", description = "News information")
+    public ApiResponse<NewsResponseDto> getNewsBySlug(@PathVariable("slug") String slug) {
+        return ApiResponse.<NewsResponseDto>builder()
+                .result(newsService.getNewsBySlug(slug))
+                .build();
+    }
+    @GetMapping("/search")
+    @Operation(
+            summary = "Search news",
+            description = "Returns a paginated list of news, supporting optional keyword search by name and filtering by status (ACTIVE or INACTIVE).",
+            parameters = {
+                    @Parameter(name = "page", description = "Current page number (starting from 0)", example = "0"),
+                    @Parameter(name = "size", description = "Number of items per page", example = "10"),
+                    @Parameter(name = "keyword", description = "Keyword to search by news name", example = "internal medicine"),
+                    @Parameter(name = "status", description = "Filter by news status (ACTIVE or INACTIVE)", example = "ACTIVE"),
+                    @Parameter(name= "newsTypeId", description = "News type id to find news contain news type id", example = "1")
+            },
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "Paginated list of news",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = PaginatedResponse.class)
+                            )
+                    )
+            }
+    )
+    public ApiResponse<PaginatedResponse<NewsResponseDto>> searchNews(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(required = false) Status status,
+            @RequestParam(required = false) Long newsTypeId
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<NewsResponseDto> dtos = newsService.getAllNews(pageable, keyword, status, newsTypeId);
+        return ApiResponse.<PaginatedResponse<NewsResponseDto>>builder()
+                .result(new PaginatedResponse<>(dtos))
+                .build();
+    }
+
 
     @PostMapping
     @Operation(summary = "Create new news information", description = "Return the newly created news information")

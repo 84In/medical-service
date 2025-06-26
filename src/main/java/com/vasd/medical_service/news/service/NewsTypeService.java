@@ -5,11 +5,15 @@ import com.vasd.medical_service.exception.AppException;
 import com.vasd.medical_service.exception.ErrorCode;
 import com.vasd.medical_service.news.dto.request.CreateNewsTypeDto;
 import com.vasd.medical_service.news.dto.request.UpdateNewsTypeDto;
+import com.vasd.medical_service.news.dto.response.NewsResponseDto;
 import com.vasd.medical_service.news.dto.response.NewsTypeResponseDto;
+import com.vasd.medical_service.news.entities.News;
 import com.vasd.medical_service.news.entities.NewsType;
 import com.vasd.medical_service.news.repository.NewsTypeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -36,11 +40,20 @@ public class NewsTypeService {
         return mapNewsTypeToDto(newsType);
     }
 
+    public Page<NewsTypeResponseDto> getAllNewsTypes(Pageable pageable, String keyword, Status status) {
+        Page<NewsType> newsTypesPage = newsTypeRepository.searchNewsTypes(
+                keyword != null && !keyword.trim().isEmpty() ? keyword.trim() : null,
+                status,
+                pageable
+        );
+        return newsTypesPage.map(this::mapNewsTypeToDto);
+    }
+
     public NewsTypeResponseDto createNewsType(CreateNewsTypeDto createNewsTypeDto) {
 
         NewsType newsType = new NewsType();
         newsType.setName(createNewsTypeDto.getName());
-        newsType.setStatus(Status.ACTIVE);
+        newsType.setStatus(createNewsTypeDto.getStatus());
         log.info("createNewsType: {}", newsType);
         return mapNewsTypeToDto(newsTypeRepository.save(newsType));
     }

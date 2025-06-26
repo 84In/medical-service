@@ -32,10 +32,10 @@ public class News {
     @Column(length = 255)
     private String thumbnailUrl;
 
-    @Lob
+    @Column(name = "description_short",columnDefinition = "TEXT")
     private String descriptionShort;
 
-    @Lob
+    @Column(name = "content_html",columnDefinition = "LONGTEXT")
     private String contentHtml;
 
     @Enumerated(EnumType.ORDINAL)

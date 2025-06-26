@@ -1,7 +1,10 @@
 package com.vasd.medical_service.news.service;
 
+import com.vasd.medical_service.Enum.Status;
 import com.vasd.medical_service.exception.AppException;
 import com.vasd.medical_service.exception.ErrorCode;
+import com.vasd.medical_service.medical_services.dto.response.ServiceResponseDto;
+import com.vasd.medical_service.medical_services.entities.Services;
 import com.vasd.medical_service.news.dto.request.CreateNewsDto;
 import com.vasd.medical_service.news.dto.request.UpdateNewsDto;
 import com.vasd.medical_service.news.dto.response.NewsResponseDto;
@@ -13,8 +16,11 @@ import com.vasd.medical_service.news.repository.NewsTypeRepository;
 import com.vasd.medical_service.upload.service.ImageUsageProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,23 +47,50 @@ public class NewsService {
         return newsToDto(news);
     }
 
+    public Page<NewsResponseDto> getAllNews(Pageable pageable, String keyword, Status status, Long newsTypeId) {
+        Page<News> newsPage = newsRepository.searchNews(
+                keyword != null && !keyword.trim().isEmpty() ? keyword.trim() : null,
+                status,
+                newsTypeId,
+                pageable
+        );
+        return newsPage.map(this::newsToDto);
+    }
+
+
     public NewsResponseDto createNews(CreateNewsDto createNewsDto) {
+        try {
+            NewsType newsType = newsTypeRepository.findById(createNewsDto.getNewsTypeId())
+                    .orElseThrow(() -> new AppException(ErrorCode.NEWS_TYPE_NOT_FOUND));
 
-        NewsType newsType = newsTypeRepository.findById(createNewsDto.getNewsTypeId()).orElseThrow(() -> new AppException(ErrorCode.NEWS_TYPE_NOT_FOUND));
+            News news = new News();
+            news.setName(createNewsDto.getName());
+            news.setContentHtml(createNewsDto.getContentHtml());
+            news.setSlug(createNewsDto.getSlug());
+            news.setDescriptionShort(createNewsDto.getDescriptionShort());
+            news.setNewsType(newsType);
+            news.setThumbnailUrl(createNewsDto.getThumbnailUrl());
+            news.setStatus(createNewsDto.getStatus());
 
-        News news = new News();
-        news.setId(news.getId());
-        news.setName(news.getName());
-        news.setContentHtml(news.getContentHtml());
-        news.setSlug(news.getSlug());
-        news.setDescriptionShort(news.getDescriptionShort());
-        news.setNewsType(newsType);
-        news.setThumbnailUrl(news.getThumbnailUrl());
-        news.setStatus(news.getNewsType().getStatus());
-        log.info("News created: {}", news);
-        imageUsageProcessor.processImageUrl(news.getThumbnailUrl());
-        imageUsageProcessor.processImagesFromHtml(news.getContentHtml());
-        return newsToDto(news);
+            log.info("News created: {}", news);
+
+            // Xử lý ảnh
+            imageUsageProcessor.processImageUrl(news.getThumbnailUrl());
+            imageUsageProcessor.processImagesFromHtml(news.getContentHtml());
+
+            return newsToDto(newsRepository.save(news));
+        } catch (AppException e) {
+            log.error("App exception when creating news: {}", e.getMessage());
+            throw e; // giữ nguyên lỗi để controller/handler xử lý
+        } catch (Exception e) {
+            log.error("Unexpected error when creating news", e);
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION); // hoặc định nghĩa lỗi riêng như CREATE_NEWS_FAILED
+        }
+    }
+
+
+    public NewsResponseDto getNewsBySlug(String slug) {
+        return newsToDto(newsRepository.findBySlugAndStatusNotIn(slug, Collections.singleton(Status.DELETED)).orElseThrow(() -> new AppException(ErrorCode.NEWS_NOT_FOUND)));
     }
 
     public NewsResponseDto updateNews(Long id, UpdateNewsDto updateNewsDto) {
@@ -89,7 +122,7 @@ public class NewsService {
             news.setStatus(updateNewsDto.getStatus());
         }
         log.info("News updated: {}", news);
-        return newsToDto(news);
+        return newsToDto(newsRepository.save(news));
     }
 
     public void deleteNews(Long id) {
@@ -110,9 +143,11 @@ public class NewsService {
                         .status(news.getNewsType().getStatus())
                         .build())
                 .thumbnailUrl(news.getThumbnailUrl())
-                .status(news.getNewsType().getStatus())
+                .status(news.getStatus())
                 .createdAt(news.getCreatedAt())
                 .updatedAt(news.getUpdatedAt())
                 .build();
     }
+
+
 }
